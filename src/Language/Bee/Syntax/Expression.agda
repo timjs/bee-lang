@@ -7,7 +7,7 @@ open import Language.Bee.Syntax.Type
 
 ---- Expressions ---------------------------------------------------------------
 
-infix  9  `_ _⦂_  _!
+infix  9  `_ _`:_  _!
 infix  9 _u8 _u16 _u32 _u64
 infix  9 _i8 _i16 _i32 _i64
 infix  8 `¬_
@@ -34,10 +34,12 @@ record Module : Set
 data Declaration : Set
 data Parameter : Set
 data Expression : Set
-data Pattern : Set
 data Operation : Set
 data Literal : Set
-data Heap : Set
+-- data Pattern : Set
+Heap : Set
+data Value : Expression → Set
+data BasicValue : Expression → Set
 
 record Module where
   field
@@ -50,41 +52,63 @@ data Declaration where
   val : Id → Declaration
 
 data Parameter where
-  _⦂_ : Id → Type → Parameter
+  _`:_ : Id → Type → Parameter
 
 data Expression where
   `_ : Id → Expression
   _∙_ : ∀ {n : Nat} → Expression → Vec Expression n → Expression
   lit : Literal → Expression
   opr : Operation → Expression
-  val_`=_⨾_ : Id → Pattern → Expression → Expression
+  val_`=_⨾_ : Id → Expression → Expression → Expression
   `if_then_else_ : Expression → Expression → Expression → Expression
   ptr : Ix → Expression
   reg⟨_⟩_ : Heap → Expression → Expression
 
 data Operation where
-  new get put run : Operation
+  alloc load store run : Operation
+  panic : Operation
   calc : Operator.Calculate → Operation
   comp : Operator.Compare → Operation
-  reas : Operator.Reason -> Operation
+  resn : Operator.Reason → Operation
 
 data Literal where
-  _u8 _u16 _u32 _u64 : Nat → Literal
-  _i8 _i16 _i32 _i64 : Int → Literal
-  true false ⟨⟩ : Literal
+  word : (s : Sign) → (w : Width) → Nat∨Int s → Literal
+  `true `false ⟨⟩ : Literal
 
-data Pattern where
-  `_ : Id → Pattern
-  lit : Literal → Pattern
+-- data Pattern where
+--   `_ : Id → Pattern
+--   lit : Literal → Pattern
 
-data Heap where
+Heap = List (Id × Σ[ e ∈ Expression ] BasicValue e)
+
+
+---- Values --------------------------------------------------------------------
+
+data Value where
+  v-lit : ∀ {l} → Value (lit l)
+  v-opr : ∀ {o} → Value (opr o)
+  v-ptr : ∀ {i} → Value (ptr i)
+
+data BasicValue where
+  b-lit : ∀ {l} → BasicValue (lit l)
 
 
 ---- Sugar ---------------------------------------------------------------------
 
-pattern var_≔_⨾_ x e r = val x `= opr new ∙ [ e ] ⨾ r
-pattern _! e = opr get ∙ [ e ]
-pattern _≔_⨾_ x e r = val lit ⟨⟩ `= opr put ∙ [ x , e ] ⨾ r
+pattern var_≔_⨾_ x e r = val x `= opr alloc ∙ [ e ] ⨾ r
+pattern _! e = opr load ∙ [ e ]
+pattern _≔_⨾_ x e r = val "_" `= opr store ∙ [ x , e ] ⨾ r
+-- pattern `with_←_∙_⨾_ xs f as e = f ∙ (as ∷ fn⟨xs⟩ e)
+
+pattern _u8  n = lit (word unsigned  8bits n)
+pattern _u16 n = lit (word unsigned 16bits n)
+pattern _u32 n = lit (word unsigned 32bits n)
+pattern _u64 n = lit (word unsigned 64bits n)
+
+pattern _i8  n = lit (word signed  8bits n)
+pattern _i16 n = lit (word signed 16bits n)
+pattern _i32 n = lit (word signed 32bits n)
+pattern _i64 n = lit (word signed 64bits n)
 
 pattern _`+_ a b = opr (calc add) ∙ [ a , b ]
 pattern _`-_ a b = opr (calc sub) ∙ [ a , b ]
@@ -99,9 +123,9 @@ pattern _`≢_ a b = opr (comp nq) ∙ [ a , b ]
 pattern _`≥_ a b = opr (comp ge) ∙ [ a , b ]
 pattern _`>_ a b = opr (comp gt) ∙ [ a , b ]
 
-pattern _`∧_ a b = opr (reas and) ∙ [ a , b ]
-pattern _`∨_ a b = opr (reas orr) ∙ [ a , b ]
-pattern  `¬_ a   = opr (reas not) ∙ [ a ]
+pattern _`∧_ a b = opr (resn and) ∙ [ a , b ]
+pattern _`∨_ a b = opr (resn orr) ∙ [ a , b ]
+pattern  `¬_ a   = opr (resn not) ∙ [ a ]
 
 -- infix 8 _[_] _[_,_] _[_,_,_] _[_,_,_,_] _[_,_,_,_,_]
 -- pattern _[_] f a = f ∙ (a ∷ [])
@@ -114,11 +138,11 @@ pattern  `¬_ a   = opr (reas not) ∙ [ a ]
 ---- Examples ------------------------------------------------------------------
 
 _ : Expression
-_ = lit (2 u8)
+_ = 2 u8
 
 _ : Declaration
 _ =
-  fun "min" [ "a" ⦂ U8 , "b" ⦂ U8 ] (
+  fun "min" [ "a" `: U8 , "b" `: U8 ] (
     `if `"a" `< `"b"
       then `"a"
       else `"b"
