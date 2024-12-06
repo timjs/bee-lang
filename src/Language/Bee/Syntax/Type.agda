@@ -1,7 +1,7 @@
-module Language.Bee.Type where
+module Language.Bee.Syntax.Type where
 
-open import Helpers
-open import Language.Bee.Common
+open import Prelude
+open import Language.Bee.Syntax.Common
 
 ---- Types ---------------------------------------------------------------------
 

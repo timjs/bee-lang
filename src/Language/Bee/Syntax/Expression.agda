@@ -1,8 +1,8 @@
-module Language.Bee.Syntax where
+module Language.Bee.Syntax.Expression where
 
-open import Helpers
-open import Language.Bee.Common
-open import Language.Bee.Type
+open import Prelude
+open import Language.Bee.Syntax.Common
+open import Language.Bee.Syntax.Type
 
 
 ---- Expressions ---------------------------------------------------------------

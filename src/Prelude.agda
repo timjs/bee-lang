@@ -1,4 +1,4 @@
-module Helpers where
+module Prelude where
 
 open import Data.List using (List; _∷_; []) public
 open import Data.Nat using () renaming (ℕ to Nat) public
