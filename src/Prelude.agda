@@ -1,5 +1,6 @@
 module Prelude where
 
+open import Data.Empty using (⊥) public
 open import Data.List using (List; _∷_) renaming ([] to ∅) public
 open import Data.List.Relation.Unary.Unique.Propositional using (Unique) public
 open import Data.Nat using () renaming (ℕ to Nat) public
@@ -8,6 +9,7 @@ open import Data.Product using (_×_; Σ; ∃; Σ-syntax) renaming (_,_ to ⟨_,
 -- open import Data.Refinement using (Refinement-syntax; _,_) public
 open import Data.String using (String) public
 open import Data.Vec using (Vec; _∷_) renaming ([] to ∅) public
+open import Data.Unit using (⊤) renaming (tt to ⟨⟩) public
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_) public
 open import Function using (_∘_; _|>_) public
 

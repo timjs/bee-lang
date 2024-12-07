@@ -4,11 +4,14 @@ open import Prelude
 open import Language.Bee.Syntax.Common
 open import Language.Bee.Syntax.Expression
 open import Language.Bee.Syntax.Type
+open import Data.Vec using (zip)
+open import Data.Vec.Relation.Unary.All using (All)
+open import Data.List.Relation.Binary.Sublist.Propositional using (_⊆_)
 
-infix  6 ⌈_⌉_ ⟦_⟧ₜ
+infix  6 ⌈_⌉_ ⟦_⟧ᵀ
 infixl 5 _++_
 infixl 5 _,_⦂_
-infix  4 _∋_⦂_ _⊢_⦂_∥_ _⊢ᴸ_⦂_ _⊢ᴼ_⦂_∥_
+infix  4 _∋_⦂_ _⊢_⦂_∥_ _⊢ᴼ_⦂_∥_ _⊢ᴸ_⦂_
 
 
 ---- Contexts ------------------------------------------------------------------
@@ -34,28 +37,18 @@ data _∋_⦂_ : Context → Id → Type → Set where
 
 ---- Helpers -------------------------------------------------------------------
 
-⟦_⟧ₜ : (e : Expression) → {BasicValue e} → Type
-⟦ lit (word s w _) ⟧ₜ = Word s w
-⟦ lit `true ⟧ₜ = Bool
-⟦ lit `false ⟧ₜ = Bool
-⟦ lit ⟨⟩ ⟧ₜ = Unit
+⟦_⟧ᵀ : (e : Expression) → {BasicValue e} → Type
+⟦ lit (word s w _) ⟧ᵀ = Word s w
+⟦ lit `true ⟧ᵀ = Bool
+⟦ lit `false ⟧ᵀ = Bool
+⟦ lit ⟨⟩ ⟧ᵀ = Unit
 
 ⌈_⌉_ : Heap → Id → Context
 ⌈ ∅ ⌉ _ = ∅
-⌈ ⟨ x , ⟨ v , p ⟩ ⟩ ∷ Θ ⌉ h = ⌈ Θ ⌉ h , x ⦂ ⟦ v ⟧ₜ {p}
+⌈ ⟨ x , ⟨ v , p ⟩ ⟩ ∷ Θ ⌉ h = ⌈ Θ ⌉ h , x ⦂ ⟦ v ⟧ᵀ {p}
 
 
 ---- Typing judgements ---------------------------------------------------------
-
-data _⊢ᴼ_⦂_∥_ : Context → Operation → Type → Effect → Set where
-  -- o-alloc : ∀ {Γ} →
-  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
-  -- o-load : ∀ {Γ} →
-  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
-  -- o-store : ∀ {Γ} →
-  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
-  -- o-run : ∀ {Γ} →
-  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
 
 data _⊢ᴸ_⦂_ : Context → Literal → Type → Set where
   l-word : ∀ {Γ s w n} →
@@ -71,6 +64,16 @@ data _⊢ᴸ_⦂_ : Context → Literal → Type → Set where
     -------------
     Γ ⊢ᴸ ⟨⟩ ⦂ Unit
 
+data _⊢ᴼ_⦂_∥_ : Context → Operation → Type → Effect → Set where
+  -- o-alloc : ∀ {Γ} →
+  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
+  -- o-load : ∀ {Γ} →
+  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
+  -- o-store : ∀ {Γ} →
+  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
+  -- o-run : ∀ {Γ} →
+  --   Γ ⊢ᴼ {!   !} ⦂ {!   !} ∥ {!   !}
+
 data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
   t-var : ∀ {Γ x τ} →
     Γ ∋ x ⦂ τ →
@@ -78,9 +81,9 @@ data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
     Γ ⊢ ` x ⦂ τ ∥ ∅
   t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
     Γ ⊢ e₀ ⦂ τ⁺ ⟨ η ⟩→ τ₀ ∥ η₀ →
-    -- FIXME
-    -- All3 (λ eᵢ τᵢ ηᵢ → Γ ⊢ eᵢ ⦂ τᵢ ∥ ηᵢ) (zip3 e⁺ τ⁺ η⁺) →
-    -----------------------------------------------------------
+    --FIXME correct?
+    All (λ {⟨ eᵢ , τᵢ ⟩ → ∀ {ηᵢ} → Γ ⊢ eᵢ ⦂ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
+    ------------------------------------------------------------------------
     Γ ⊢ e₀ ∙ e⁺ ⦂ τ₀ ∥ η⁺ ∪ η ∪ η₀
   t-lit : ∀ {Γ l π} →
     Γ ⊢ᴸ l ⦂ π →
