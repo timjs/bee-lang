@@ -1,29 +1,19 @@
 module Language.Bee.Syntax.Type where
 
 open import Prelude
-open import Data.List using (_++_)
 open import Language.Bee.Syntax.Common
 
 
 ---- Effects -------------------------------------------------------------------
 
--- infix  7 Ref⟨_,_⟩ Alloc⟨_⟩ Load⟨_⟩ Store⟨_⟩
-infix  7 Ref⟨_,_⟩ Modify⟨_⟩
-infixl 7 _∪_
+infix  7 Ref⟨_,_⟩ Alloc⟨_⟩ Load⟨_⟩ Store⟨_⟩
 
 data Label : Set where
   Panic Diverge : Label
-  Modify⟨_⟩ : Id → Label
-  -- Alloc⟨_⟩ Load⟨_⟩ Store⟨_⟩ : Id → Label
+  Alloc⟨_⟩ Load⟨_⟩ Store⟨_⟩ : Id → Label
 
--- For now, we use simple lists of labels.
--- Later on, we could use a Refinement type.
 Effect : Set
--- Effect = [ l ∈ List Label ∣ Unique l ]
-Effect = List Label
-
-_∪_ : Effect → Effect → Effect
-_∪_ = _++_
+Effect = List⁼ Label
 
 
 ---- Types ---------------------------------------------------------------------
@@ -44,12 +34,13 @@ data Width : Set where
 data Type : Set
 data IsPrimitive : Type → Set
 data IsBasic : Type → Set
+BasicType PrimitiveType : Set
 
 data Type where
   -- Arrows
   _⟨_⟩→_ : ∀ {n : Nat} → Vec Type n → Effect → Type → Type
   -- References
-  Ref⟨_,_⟩ : Id → (τ : Type) → {IsBasic τ} → Type
+  Ref⟨_,_⟩ : Id → BasicType → Type
   -- Primitives
   Unit Bool : Type
   Word : Sign → Width → Type
@@ -64,15 +55,20 @@ data IsBasic where
   β-Bool : IsBasic Bool
   β-Word : ∀ {s : Sign} {w : Width} → IsBasic (Word s w)
 
+BasicType = [ β ∈ Type ∣ IsBasic β ]
+PrimitiveType = [ π ∈ Type ∣ IsPrimitive π ]
+
 
 ---- Sugar ---------------------------------------------------------------------
 
 pattern U8  = Word unsigned 8bits
 pattern U16 = Word unsigned 16bits
 pattern U32 = Word unsigned 32bits
+pattern U64 = Word unsigned 64bits
 pattern I8  = Word signed 8bits
 pattern I16 = Word signed 16bits
 pattern I32 = Word signed 32bits
+pattern I64 = Word signed 64bits
 
 
 ---- Examples ------------------------------------------------------------------

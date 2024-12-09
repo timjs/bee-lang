@@ -38,8 +38,9 @@ data Operation : Set
 data Literal : Set
 -- data Pattern : Set
 Heap : Set
-data Value : Expression → Set
-data BasicValue : Expression → Set
+data IsValue : Expression → Set
+data IsBasicValue : Expression → Set
+Value BasicValue : Set
 
 record Module where
   field
@@ -61,7 +62,7 @@ data Expression where
   opr : Operation → Expression
   val_`=_⨾_ : Id → Expression → Expression → Expression
   `if_then_else_ : Expression → Expression → Expression → Expression
-  ptr : Ix → Expression
+  adr : Ix → Expression
   reg⟨_⟩_ : Heap → Expression → Expression
 
 data Operation where
@@ -79,25 +80,29 @@ data Literal where
 --   `_ : Id → Pattern
 --   lit : Literal → Pattern
 
-Heap = List (Id × Σ[ e ∈ Expression ] BasicValue e)
+Heap = List (Id × BasicValue)
 
 
 ---- Values --------------------------------------------------------------------
 
-data Value where
-  v-lit : ∀ {l} → Value (lit l)
-  v-opr : ∀ {o} → Value (opr o)
-  v-ptr : ∀ {i} → Value (ptr i)
+data IsValue where
+  v-lit : ∀ {l} → IsValue (lit l)
+  v-opr : ∀ {o} → IsValue (opr o)
+  v-adr : ∀ {a} → IsValue (adr a)
 
-data BasicValue where
-  b-lit : ∀ {l} → BasicValue (lit l)
+data IsBasicValue where
+  b-lit : ∀ {l} → IsBasicValue (lit l)
+
+Value = [ v ∈ Expression ∣ IsValue v ]
+BasicValue = [ b ∈ Expression ∣ IsBasicValue b ]
 
 
 ---- Sugar ---------------------------------------------------------------------
 
-pattern var_≔_⨾_ x e r = val x `= opr alloc ∙ [ e ] ⨾ r
+pattern var_≔_⨾_ x e r = val x `= opr alloc ∙ (e ∷ []) ⨾ r
 pattern _! e = opr load ∙ [ e ]
 pattern _≔_⨾_ x e r = val "_" `= opr store ∙ [ x , e ] ⨾ r
+pattern _▶_∙_ x f xs = f ∙ (x ∷ xs)
 -- pattern `with_←_∙_⨾_ xs f as e = f ∙ (as ∷ fn⟨xs⟩ e)
 
 pattern _u8  n = lit (word unsigned  8bits n)
@@ -143,6 +148,7 @@ _ = 2 u8
 _ : Declaration
 _ =
   fun "min" [ "a" `: U8 , "b" `: U8 ] (
+    val "x" `= `"a" `* 2 u8 ⨾
     `if `"a" `< `"b"
       then `"a"
       else `"b"
