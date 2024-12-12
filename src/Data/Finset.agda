@@ -46,3 +46,18 @@ _∪_ : Finset → Finset → Finset
 
 _⊆_ : Finset → Finset → Set
 ⟨ xs ∣ _ ⟩ ⊆ ⟨ ys ∣ _ ⟩ = xs Subset.⊆ ys
+
+[_] : A → Finset
+[ a ] = a , ∅
+
+[_,_] : A → A → Finset
+[ a , b ] = a , b , ∅
+
+[_,_,_] : A → A → A → Finset
+[ a , b , c ] = a , b , c , ∅
+
+[_,_,_,_] : A → A → A → A → Finset
+[ a , b , c , d ] = a , b , c , d , ∅
+
+[_,_,_,_,_] : A → A → A → A → A → Finset
+[ a , b , c , d , e ] = a , b , c , d , e , ∅

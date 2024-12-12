@@ -1,8 +1,8 @@
 module Language.Bee.Check where
 
 open import Prelude
-open import Language.Bee.Context
-open import Language.Bee.Syntax
+open import Language.Bee.Context renaming (∅ to ∅ᶜ)
+open import Language.Bee.Syntax renaming ([_,_,_] to [_,_,_]ᴱ)
 open import Data.Vec using (zip)
 open import Data.Vec.Relation.Unary.All using (All)
 
@@ -69,7 +69,7 @@ data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
     -------------------------------
     Γ ⊢ adr a ⦂ Ref⟨ h , β ⟩ ∥ η
   t-reg : ∀ {Γ Θ h e τ η} →
-    [ Alloc⟨ h ⟩ , Load⟨ h ⟩ , Store⟨ h ⟩ ] ⊆ η →
+    [ Alloc⟨ h ⟩ , Load⟨ h ⟩ , Store⟨ h ⟩ ]ᴱ ⊆ η →
     Γ ++ ⌈ Θ ⌉ h ⊢ e ⦂ τ ∥ η →
     ----------------------------------------
     Γ ⊢ reg⟨ Θ ⟩ e ⦂ τ ∥ η

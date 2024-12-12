@@ -63,4 +63,4 @@ Store⟨ h₁ ⟩ ≟ Store⟨ h₂ ⟩ with h₁ String.≟ h₂
 
 ---- Effects -------------------------------------------------------------------
 
-open import Data.Finset (_≟_) using (_∪_; ∅) renaming (Finset to Effect) public
+open import Data.Finset (_≟_) renaming (Finset to Effect) public
