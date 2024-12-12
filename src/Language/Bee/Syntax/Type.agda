@@ -2,22 +2,11 @@ module Language.Bee.Syntax.Type where
 
 open import Prelude
 open import Language.Bee.Syntax.Common
-
-
----- Effects -------------------------------------------------------------------
-
-infix  7 Ref⟨_,_⟩ Alloc⟨_⟩ Load⟨_⟩ Store⟨_⟩
-
-data Label : Set where
-  Panic Diverge : Label
-  Alloc⟨_⟩ Load⟨_⟩ Store⟨_⟩ : Id → Label
-
-Effect : Set
-Effect = List⁼ Label
-
+open import Language.Bee.Syntax.Effect
 
 ---- Types ---------------------------------------------------------------------
 
+infix  7 Ref⟨_,_⟩
 infix  6 _⟨_⟩→_
 
 data Sign : Set where
