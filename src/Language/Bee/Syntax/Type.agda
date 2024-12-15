@@ -6,7 +6,6 @@ open import Language.Bee.Syntax.Effect
 
 ---- Types ---------------------------------------------------------------------
 
-infix  7 Ref⟨_,_⟩
 infix  6 _⟨_⟩→_
 
 data Sign : Set where
@@ -29,7 +28,7 @@ data Type where
   -- Arrows
   _⟨_⟩→_ : ∀ {n : Nat} → Vec Type n → Effect → Type → Type
   -- References
-  Ref⟨_,_⟩ : Id → BasicType → Type
+  Ref : Id → (β : Type) → {{IsBasic β}} → Type
   -- Primitives
   Unit Bool : Type
   Word : Sign → Width → Type
