@@ -7,7 +7,7 @@ open import Language.Bee.Syntax.Type
 
 ---- Expressions ---------------------------------------------------------------
 
-infix  9  `_ _`:_  _!
+infix  9 `_ _`:_  _!
 infix  9 _u8 _u16 _u32 _u64
 infix  9 _i8 _i16 _i32 _i64
 infix  8 `¬_

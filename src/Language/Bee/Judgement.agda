@@ -1,4 +1,4 @@
-module Language.Bee.Check where
+module Language.Bee.Judgement where
 
 open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ)
