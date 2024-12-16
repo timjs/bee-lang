@@ -1,6 +1,10 @@
 module Language.Bee.Syntax.Expression where
 
-open import Prelude
+open import Prelude hiding (if_then_else_; _≡_; _≢_)
+
+import Agda.Builtin.Bool as Agda
+import Data.Int as Int
+
 open import Language.Bee.Syntax.Common
 open import Language.Bee.Syntax.Type
 
@@ -10,25 +14,15 @@ open import Language.Bee.Syntax.Type
 infix  9 `_ _`:_  _!
 infix  9 _u8 _u16 _u32 _u64
 infix  9 _i8 _i16 _i32 _i64
-infix  8 `¬_
+-- infix  8 `¬_
 infixl 8  _◂_
 infix  7 reg⟨_⟩_
-infixl 7 _`*_ _`/_ _`%_
-infixr 7 _`∧_ _`∨_
+infixl 7 _`*_ -- _`/_ _`%_
+-- infixr 7 _`∧_ _`∨_
 infixl 6 _`+_ _`-_
 infix  4 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_
 infix  1 `if_then_else_
 infixr 0 val_`=_⨾_ var_≔_⨾_ _≔_⨾_
-
-module Operator where
-  data Calculate : Set where
-    add sub mul div mod : Calculate
-  data Compare : Set where
-    lt le eq ge gt nq : Compare
-
-  data Reason : Set where
-    and orr not : Reason
-open Operator
 
 record Module : Set
 data Declaration : Set
@@ -49,7 +43,7 @@ record Module where
 
 data Declaration where
   --TS Don't know why you need the `lvars` for, you can deduce them from the expression
-  fun : ∀ {n : Nat} → Id → Vec Parameter n → Expression → Declaration
+  fun : Id → List Parameter → Expression → Declaration
   val : Id → Declaration
 
 data Parameter where
@@ -57,7 +51,7 @@ data Parameter where
 
 data Expression where
   `_ : Id → Expression
-  _◂_ : ∀ {n : Nat} → Expression → Vec Expression n → Expression
+  _◂_ : Expression → List Expression → Expression
   lit : Literal → Expression
   opr : Operation → Expression
   val_`=_⨾_ : Id → Expression → Expression → Expression
@@ -69,12 +63,11 @@ data Expression where
 data Operation where
   alloc load store : Operation
   panic : Operation
-  calc : Operator.Calculate → Operation
-  comp : Operator.Compare → Operation
-  resn : Operator.Reason → Operation
+  calc : (Int → Int → Int) → Operation
+  comp : (Int → Int → Agda.Bool) → Operation
 
 data Literal where
-  word : (s : Sign) → (w : Width) → Nat∨Int s → Literal
+  word : (s : Sign) → (w : Width) → Int → Literal
   `true `false ⟨⟩ : Literal
 
 -- data Pattern where
@@ -116,22 +109,20 @@ pattern _i16 n = lit (word signed 16bits n)
 pattern _i32 n = lit (word signed 32bits n)
 pattern _i64 n = lit (word signed 64bits n)
 
-pattern _`+_ a b = opr (calc add) ◂ [ a , b ]
-pattern _`-_ a b = opr (calc sub) ◂ [ a , b ]
-pattern _`*_ a b = opr (calc mul) ◂ [ a , b ]
-pattern _`/_ a b = opr (calc div) ◂ [ a , b ]
-pattern _`%_ a b = opr (calc mod) ◂ [ a , b ]
+_`+_ _`-_ _`*_ : Expression → Expression → Expression
+a `+ b = opr (calc Int._+_) ◂ [ a , b ]
+a `- b = opr (calc Int._-_) ◂ [ a , b ]
+a `* b = opr (calc Int._*_) ◂ [ a , b ]
+-- a `/ b = opr (calc Int._/_) ◂ [ a , b ]
+-- a `% b = opr (calc Int._%_) ◂ [ a , b ]
 
-pattern _`<_ a b = opr (comp lt) ◂ [ a , b ]
-pattern _`≤_ a b = opr (comp le) ◂ [ a , b ]
-pattern _`≡_ a b = opr (comp eq) ◂ [ a , b ]
-pattern _`≢_ a b = opr (comp nq) ◂ [ a , b ]
-pattern _`≥_ a b = opr (comp ge) ◂ [ a , b ]
-pattern _`>_ a b = opr (comp gt) ◂ [ a , b ]
-
-pattern _`∧_ a b = opr (resn and) ◂ [ a , b ]
-pattern _`∨_ a b = opr (resn orr) ◂ [ a , b ]
-pattern  `¬_ a   = opr (resn not) ◂ [ a ]
+_`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_ : Expression → Expression → Expression
+a `< b = opr (comp Int._<ᵇ_) ◂ [ a , b ]
+a `≤ b = opr (comp Int._≤ᵇ_) ◂ [ a , b ]
+a `≡ b = opr (comp Int._≡ᵇ_) ◂ [ a , b ]
+a `≢ b = opr (comp Int._≢ᵇ_) ◂ [ a , b ]
+a `≥ b = opr (comp Int._≥ᵇ_) ◂ [ a , b ]
+a `> b = opr (comp Int._>ᵇ_) ◂ [ a , b ]
 
 -- infix 8 _[_] _[_,_] _[_,_,_] _[_,_,_,_] _[_,_,_,_,_]
 -- pattern _[_] f a = f ◂ [ a ]
@@ -144,12 +135,12 @@ pattern  `¬_ a   = opr (resn not) ◂ [ a ]
 ---- Examples ------------------------------------------------------------------
 
 _ : Expression
-_ = 2 u8
+_ = (+ 2) u8
 
 _ : Declaration
 _ =
   fun "min" [ "a" `: U8 , "b" `: U8 ] (
-    val "x" `= `"a" `* 2 u8 ⨾
+    val "x" `= `"a" `* (+ 2) u8 ⨾
     `if `"a" `< `"b"
       then `"a"
       else `"b"

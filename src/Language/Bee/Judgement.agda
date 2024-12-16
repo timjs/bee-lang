@@ -1,10 +1,8 @@
 module Language.Bee.Judgement where
 
 open import Prelude
-open import Language.Bee.Context renaming (∅ to ∅ᶜ)
+open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
-open import Data.Vec using (zip)
-open import Data.Vec.Relation.Unary.All using (All)
 
 infix  4 _⊢_⦂_∥_ _⊢ᴼ_⦂_ _⊢ᴸ_⦂_
 
@@ -52,10 +50,16 @@ data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
     --------------
     Γ ⊢ ` x ⦂ τ ∥ ∅
   t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-    Γ ⊢ e₀ ⦂ τ⁺ ⟨ η ⟩→ τ₀ ∥ η₀ →
+    Γ ⊢ e₀ ⦂ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
     All (λ {⟨ eᵢ , τᵢ ⟩ → ∀ {ηᵢ} → Γ ⊢ eᵢ ⦂ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
     ------------------------------------------------------------------------
     Γ ⊢ e₀ ◂ e⁺ ⦂ τ₀ ∥ η ∪ η₀ ∪ η⁺
+  -- t-app-1 : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
+  --   Γ ⊢ e₀ ⦂ τ₁ ⟨ η ⟩→ τ₀ ∥ η₀ →
+  --   Γ ⊢ e₁ ⦂ τ₁ ∥ η₁ →
+  --   η₁ ⊆ η⁺}) (zip e⁺ τ⁺) →
+  --   ------------------------------------------------------------------------
+  --   Γ ⊢ e₀ ◂ e⁺ ⦂ τ₀ ∥ η ∪ η₀ ∪ η⁺
   t-lit : ∀ {Γ l π} →
     Γ ⊢ᴸ l ⦂ π →
     ----------------
@@ -78,13 +82,13 @@ data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
   t-adr : ∀ {Γ a h β} →
     {{_ : IsBasic β}} →
     ----------------------------------
-    Γ ⊢ adr a ⦂ Ref  h   β  ∥ ∅
+    Γ ⊢ adr a ⦂ Ref h β  ∥ ∅
   t-reg : ∀ {Γ Θ h e τ η} →
     Mutate h ⊆ η →
     Γ ++ ⌈ Θ ⌉ h ⊢ e ⦂ τ ∥ η →
     -------------------------
     Γ ⊢ reg⟨ Θ ⟩ e ⦂ τ ∥ η
-  o-run : ∀ {Γ h e τ η} →
+  t-run : ∀ {Γ h e τ η} →
     Mutate h ⊆ η →
     Γ ⊢ e ⦂ τ ∥ η →
     ---------------------------------------------

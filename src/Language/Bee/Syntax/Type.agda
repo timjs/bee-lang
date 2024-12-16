@@ -1,8 +1,13 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 module Language.Bee.Syntax.Type where
+
+import Data.String as String
+import Language.Bee.Syntax.Effect as Effect
+open Effect hiding (_≟_)
 
 open import Prelude
 open import Language.Bee.Syntax.Common
-open import Language.Bee.Syntax.Effect
+
 
 ---- Types ---------------------------------------------------------------------
 
@@ -12,9 +17,9 @@ data Sign : Set where
   signed : Sign
   unsigned : Sign
 
-Nat∨Int : Sign → Set
-Nat∨Int unsigned = Nat
-Nat∨Int signed = Int
+-- Nat∨Int : Sign → Set
+-- Nat∨Int unsigned = Nat
+-- Nat∨Int signed = Int
 
 data Width : Set where
   8bits 16bits 32bits 64bits : Width
@@ -26,7 +31,7 @@ BasicType PrimitiveType : Set
 
 data Type where
   -- Arrows
-  _⟨_⟩→_ : ∀ {n : Nat} → Vec Type n → Effect → Type → Type
+  _⟨_⟩→_ : List Type → Effect → Type → Type
   -- References
   Ref : Id → (β : Type) → {{IsBasic β}} → Type
   -- Primitives
@@ -46,6 +51,13 @@ data IsBasic where
 BasicType = [ β ∈ Type ∣ IsBasic β ]
 PrimitiveType = [ π ∈ Type ∣ IsPrimitive π ]
 
+basic? : (β : Type) → Dec (IsBasic β)
+basic? (_ ⟨ _ ⟩→ _) = no (λ ())
+basic? (Ref _ _) = no (λ ())
+basic? Unit = yes β-Unit
+basic? Bool = yes β-Bool
+basic? (Word _ _) = yes β-Word
+
 
 ---- Sugar ---------------------------------------------------------------------
 
@@ -57,6 +69,50 @@ pattern I8  = Word signed 8bits
 pattern I16 = Word signed 16bits
 pattern I32 = Word signed 32bits
 pattern I64 = Word signed 64bits
+
+
+---- Equality ------------------------------------------------------------------
+
+_≟_ : (τ₁ : Type) → (τ₂ : Type) → Dec (τ₁ ≡ τ₂)
+(τ⁺ ⟨ η ⟩→ τ₀) ≟ (τ′⁺ ⟨ η′ ⟩→ τ′₀) = {!   !}
+(τ⁺ ⟨ η ⟩→ τ₀) ≟ Ref h₂ τ₂ = no (λ ())
+(τ⁺ ⟨ η ⟩→ τ₀) ≟ Unit = no (λ ())
+(τ⁺ ⟨ η ⟩→ τ₀) ≟ Bool = no (λ ())
+(τ⁺ ⟨ η ⟩→ τ₀) ≟ Word s₂ w₂ = no (λ ())
+
+Ref h₁ τ₁ ≟ (τ⁺ ⟨ η ⟩→ τ₀) = no (λ ())
+Ref h₁ τ₁ ≟ Ref h₂ τ₂ = {!   !}
+-- Ref h₁ τ₁ ≟ Ref h₂ τ₂ with h₁ String.≟ h₂ | τ₁ ≟ τ₂
+-- ... | yes refl | yes refl = {!   !}
+Ref h₁ τ₁ ≟ Unit = no (λ ())
+Ref h₁ τ₁ ≟ Bool = no (λ ())
+Ref h₁ τ₁ ≟ Word s₂ w₂ = no (λ ())
+
+Unit ≟ (τ⁺ ⟨ η ⟩→ τ₀) = no (λ ())
+Unit ≟ Ref h₂ τ₂ = no (λ ())
+Unit ≟ Unit = yes refl
+Unit ≟ Bool = no (λ ())
+Unit ≟ Word s₂ w₂ = no (λ ())
+
+Bool ≟ (τ⁺ ⟨ η ⟩→ τ₀) = no (λ ())
+Bool ≟ Ref h₂ τ₂ = no (λ ())
+Bool ≟ Unit = no (λ ())
+Bool ≟ Bool = yes refl
+Bool ≟ Word s₂ w₂ = no (λ ())
+
+Word s₁ w₁ ≟ (τ⁺ ⟨ η ⟩→ τ₀) = no (λ ())
+Word s₁ w₁ ≟ Ref h₂ τ₂ = no (λ ())
+Word s₁ w₁ ≟ Unit = no (λ ())
+Word s₁ w₁ ≟ Bool = no (λ ())
+Word s₁ w₁ ≟ Word s₂ w₂ = {!   !}
+-- Word s₁ w₁ ≟ Word s₂ w₂ with s₁ Sign.≟ s₂ | w₁ Width.≟ w₂
+-- ... | yes refl | yes refl = {!   !}
+
+
+---- Primitives ----------------------------------------------------------------
+
+-- ⌈_⌉ : ∀ {A B : Set} → (A → A → B) → Type
+-- ⌈ _+_ ⌉ = ∀ {s w} → [ Word s w , Word s w ] ⟨ ∅ ⟩→ Word s w
 
 
 ---- Examples ------------------------------------------------------------------
