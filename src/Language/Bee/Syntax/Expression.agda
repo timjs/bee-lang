@@ -44,7 +44,7 @@ record Module where
 data Declaration where
   --TS Don't know why you need the `lvars` for, you can deduce them from the expression
   fun : Id → List Parameter → Expression → Declaration
-  val : Id → Declaration
+  val : Id → Expression → Declaration
 
 data Parameter where
   _`:_ : Id → Type → Parameter
@@ -61,14 +61,16 @@ data Expression where
   run : Expression → Expression
 
 data Operation where
-  alloc load store : Operation
+  alloc : Id → Expression → Operation
+  load : Expression → Operation
+  store : Expression → Expression → Operation
   panic : Operation
-  calc : (Int → Int → Int) → Operation
-  comp : (Int → Int → Agda.Bool) → Operation
+  calc : (Int → Int → Int) → Expression → Expression → Operation
+  comp : (Int → Int → Agda.Bool) → Expression → Expression → Operation
 
 data Literal where
   word : (s : Sign) → (w : Width) → Int → Literal
-  `true `false ⟨⟩ : Literal
+  True False ⟨⟩ : Literal
 
 -- data Pattern where
 --   `_ : Id → Pattern
@@ -110,19 +112,19 @@ pattern _i32 n = lit (word signed 32bits n)
 pattern _i64 n = lit (word signed 64bits n)
 
 _`+_ _`-_ _`*_ : Expression → Expression → Expression
-a `+ b = opr (calc Int._+_) ◂ [ a , b ]
-a `- b = opr (calc Int._-_) ◂ [ a , b ]
-a `* b = opr (calc Int._*_) ◂ [ a , b ]
--- a `/ b = opr (calc Int._/_) ◂ [ a , b ]
--- a `% b = opr (calc Int._%_) ◂ [ a , b ]
+a `+ b = opr (calc Int._+_ a b)
+a `- b = opr (calc Int._-_ a b)
+a `* b = opr (calc Int._*_ a b)
+-- a `/ b = opr (calc Int._/_ a b)
+-- a `% b = opr (calc Int._%_ a b)
 
 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_ : Expression → Expression → Expression
-a `< b = opr (comp Int._<ᵇ_) ◂ [ a , b ]
-a `≤ b = opr (comp Int._≤ᵇ_) ◂ [ a , b ]
-a `≡ b = opr (comp Int._≡ᵇ_) ◂ [ a , b ]
-a `≢ b = opr (comp Int._≢ᵇ_) ◂ [ a , b ]
-a `≥ b = opr (comp Int._≥ᵇ_) ◂ [ a , b ]
-a `> b = opr (comp Int._>ᵇ_) ◂ [ a , b ]
+a `< b = opr (comp Int._<ᵇ_ a b)
+a `≤ b = opr (comp Int._≤ᵇ_ a b)
+a `≡ b = opr (comp Int._≡ᵇ_ a b)
+a `≢ b = opr (comp Int._≢ᵇ_ a b)
+a `≥ b = opr (comp Int._≥ᵇ_ a b)
+a `> b = opr (comp Int._>ᵇ_ a b)
 
 -- infix 8 _[_] _[_,_] _[_,_,_] _[_,_,_,_] _[_,_,_,_,_]
 -- pattern _[_] f a = f ◂ [ a ]

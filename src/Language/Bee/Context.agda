@@ -57,8 +57,8 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 
 ⟦_⟧ᵀ : BasicValue → Type
 ⟦ ⟨ lit (word s w _) ∣ _ ⟩ ⟧ᵀ = Word s w
-⟦ ⟨ lit `true ∣ _ ⟩ ⟧ᵀ = Bool
-⟦ ⟨ lit `false ∣ _ ⟩ ⟧ᵀ = Bool
+⟦ ⟨ lit True ∣ _ ⟩ ⟧ᵀ = Bool
+⟦ ⟨ lit False ∣ _ ⟩ ⟧ᵀ = Bool
 ⟦ ⟨ lit ⟨⟩ ∣ _ ⟩ ⟧ᵀ = Unit
 
 -- This is the same operation as Leijen (2014) defines on heaps in Fig.5

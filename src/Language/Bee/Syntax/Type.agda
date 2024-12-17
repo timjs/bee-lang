@@ -33,7 +33,7 @@ data Type where
   -- Arrows
   _⟨_⟩→_ : List Type → Effect → Type → Type
   -- References
-  Ref : Id → (β : Type) → {{IsBasic β}} → Type
+  Ref : Id → (β : Type) → {IsBasic β} → Type
   -- Primitives
   Unit Bool : Type
   Word : Sign → Width → Type
@@ -50,6 +50,9 @@ data IsBasic where
 
 BasicType = [ β ∈ Type ∣ IsBasic β ]
 PrimitiveType = [ π ∈ Type ∣ IsPrimitive π ]
+
+prim-is-basic : (τ : Type) → (IsPrimitive τ) → IsBasic τ
+prim-is-basic τ = {!   !}
 
 basic? : (β : Type) → Dec (IsBasic β)
 basic? (_ ⟨ _ ⟩→ _) = no (λ ())

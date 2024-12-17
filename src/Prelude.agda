@@ -8,7 +8,7 @@ open import Data.List using (List; []; _∷_; zip) public
 open import Data.List.Membership.Propositional using (_∈_; _∉_) public
 open import Data.List.Relation.Unary.All using (All; all?) public
 open import Data.Nat using () renaming (ℕ to Nat) public
-open import Data.Product using (_×_; Σ; Σ-syntax; proj₁; proj₂; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
+open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩) public
 open import Data.Refinement using (Refinement-syntax) renaming (_,_ to ⟨_∣_⟩) public
 open import Data.Sum using (_⊎_) renaming (inj₁ to wrong; inj₂ to right) public
 open import Data.String using (String) public

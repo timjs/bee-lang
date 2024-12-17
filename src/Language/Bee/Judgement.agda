@@ -4,7 +4,7 @@ open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
 
-infix  4 _⊢_⦂_∥_ _⊢ᴼ_⦂_ _⊢ᴸ_⦂_
+infix  4 _⊢_⦂_∥_ _⊢ᴼ_⦂_∥_ _⊢ᴸ_⦂_
 
 
 ---- Typing judgements ---------------------------------------------------------
@@ -14,37 +14,44 @@ data _⊢ᴸ_⦂_ : Context → Literal → Type → Set where
     -----------------------
     Γ ⊢ᴸ word s w n ⦂ Word s w
   l-true : ∀ {Γ} →
-    ---------------
-    Γ ⊢ᴸ `true ⦂ Bool
+    ----------------
+    Γ ⊢ᴸ True ⦂ Bool
   l-false : ∀ {Γ} →
-    ---------------
-    Γ ⊢ᴸ `false ⦂ Bool
+    ----------------
+    Γ ⊢ᴸ False ⦂ Bool
   l-unit : ∀ {Γ} →
     -------------
     Γ ⊢ᴸ ⟨⟩ ⦂ Unit
+
+data _⊢ᴼ_⦂_∥_ : Context → Operation → Type → Effect → Set
+data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set
 
 -- Note: Only when making `IsBasic β` an instance argument of `Ref_`
 -- *and* having an `IsBasic β` instance argument here
 -- *and* giving it a name,
 -- resolution will fill it in automatically in the `Ref_` constructor.
-data _⊢ᴼ_⦂_ : Context → Operation → Type → Set where
-  o-alloc : ∀ {Γ β h} →
-    {{_ : IsBasic β}} →
+data _⊢ᴼ_⦂_∥_ where
+  o-alloc : ∀ {Γ h e₁ β₁ η₁} →
+    {β-ok : IsBasic β₁} →
+    Γ ⊢ e₁ ⦂ β₁ ∥ η₁ →
     ---------------------------------------------------
-    Γ ⊢ᴼ alloc ⦂ [ β ] ⟨ Alloc h ∙ ∅ ⟩→ Ref h β
-  o-load : ∀ {Γ β h} →
-    {{_ : IsBasic β}} →
+    Γ ⊢ᴼ alloc h e₁ ⦂ Ref h β₁ {β-ok} ∥ Alloc h ∙ η₁
+  o-load : ∀ {Γ h e₁ β₁ η₁} →
+    {β-ok : IsBasic β₁} →
+    Γ ⊢ e₁ ⦂ Ref h β₁ {β-ok} ∥ η₁ →
     --------------------------------------------------------
-    Γ ⊢ᴼ load ⦂ [ Ref h β ] ⟨ Load h ∙ ∅ ⟩→ β
-  o-store : ∀ {Γ β h} →
-    {{_ : IsBasic β}} →
+    Γ ⊢ᴼ load e₁ ⦂ β₁ ∥ Load h ∙ η₁
+  o-store : ∀ {Γ h β₁₂ e₁ η₁ e₂ η₂} →
+    {β-ok : IsBasic β₁₂} →
+    Γ ⊢ e₁ ⦂ Ref h β₁₂ {β-ok} ∥ η₁ →
+    Γ ⊢ e₁ ⦂ β₁₂ ∥ η₂ →
     -----------------------------------------------------------
-    Γ ⊢ᴼ store ⦂ [ Ref h β , β ] ⟨ Store h ∙ ∅ ⟩→ Unit
+    Γ ⊢ᴼ store e₁ e₂ ⦂ Unit ∥ Store h ∙ (η₁ ∪ η₂)
   o-panic : ∀ {Γ τ} →
     --------------------------------------
-    Γ ⊢ᴼ panic ⦂ [ Unit ] ⟨ Panic ∙ ∅ ⟩→ τ
+    Γ ⊢ᴼ panic ⦂ τ ∥ Panic ∙ ∅
 
-data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
+data _⊢_⦂_∥_ where
   t-var : ∀ {Γ x τ} →
     Γ ∋ x ⦂ τ →
     --------------
@@ -64,10 +71,10 @@ data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
     Γ ⊢ᴸ l ⦂ π →
     ----------------
     Γ ⊢ lit l ⦂ π ∥ ∅
-  t-opr : ∀ {Γ o τ} →
-    Γ ⊢ᴼ o ⦂ τ →
+  t-opr : ∀ {Γ o τ η} →
+    Γ ⊢ᴼ o ⦂ τ ∥ η →
     ----------------
-    Γ ⊢ opr o ⦂ τ ∥ ∅
+    Γ ⊢ opr o ⦂ τ ∥ η
   t-let : ∀ {Γ x₁ e₁ e₀ τ₁ τ₀ η₁ η₀} →
     Γ ⊢ e₁ ⦂ τ₁ ∥ η₁ →
     Γ , x₁ ⦂ τ₁ ⊢ e₀ ⦂ τ₀ ∥ η₀ →
@@ -80,9 +87,9 @@ data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set where
     ----------------------------------------------
     Γ ⊢ `if e₀ then e₁ else e₂ ⦂ τ₁₂ ∥ η₀ ∪ η₁ ∪ η₂
   t-adr : ∀ {Γ a h β} →
-    {{_ : IsBasic β}} →
+    {β-ok : IsBasic β} →
     ----------------------------------
-    Γ ⊢ adr a ⦂ Ref h β  ∥ ∅
+    Γ ⊢ adr a ⦂ Ref h β {β-ok} ∥ ∅
   t-reg : ∀ {Γ Θ h e τ η} →
     Mutate h ⊆ η →
     Γ ++ ⌈ Θ ⌉ h ⊢ e ⦂ τ ∥ η →
