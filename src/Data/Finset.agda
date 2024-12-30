@@ -1,14 +1,15 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 -- Finite sets as lists of unique elements parametrised by type A.
 -- Needs DecidableEquality on this A.
-module Data.Finset {A : Set} (_≟_ : DecidableEquality A) where
+module Data.Finset {A : Set} (_≟ᴬ_ : DecidableEquality A) where
 
 import Data.List.Relation.Binary.Subset.Propositional as Subset
 
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List using (List; []; _∷_; _++_; length)
-open import Data.List.Membership.DecPropositional (_≟_) using (_∈_; _∈?_)
+open import Data.List.Membership.DecPropositional (_≟ᴬ_) using (_∈_; _∈?_)
 open import Data.List.Relation.Unary.Any using (Any; here; there; index)
 open import Data.List.Relation.Unary.All using (All; []; _∷_)
 open import Data.List.Relation.Unary.All.Properties using (¬Any⇒All¬)
@@ -16,6 +17,7 @@ open import Data.List.Relation.Unary.Unique.Propositional using (Unique; tail)
 open import Data.List.Relation.Unary.AllPairs using (_∷_; [])
 open import Data.Nat using () renaming (ℕ to Nat)
 open import Relation.Nullary.Decidable using (Dec; yes; no)
+open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sym; cong)
 
 
 ---- Finsets -------------------------------------------------------------------
@@ -62,7 +64,7 @@ size ⟨ xs ∣ _ ⟩ = length xs
 remove : A → Finset → Finset
 remove x ⟨ xs ∣ unique-xs ⟩ = remove' x xs unique-xs where
 -- remove x ∅ = ∅
--- remove x (y ∙⟨ ys ∣ unique-ys ⟩) with x ≟ y
+-- remove x (y ∙⟨ ys ∣ unique-ys ⟩) with x ≟ᴬ y
 -- ... | yes x≡y = ⟨ ys ∣ unique-ys ⟩
 -- Note: Not very efficient! Checks if `y ∈ rec` again!
 -- ... | no ¬x≡y = y ∙ remove x ⟨ ys ∣ unique-ys ⟩
@@ -70,7 +72,7 @@ remove x ⟨ xs ∣ unique-xs ⟩ = remove' x xs unique-xs where
   -- Trick to make `remove` terminate
   remove' : A → (xs : List A) → Unique xs → Finset
   remove' x [] [] = ∅
-  remove' x (y ∷ ys) (_ ∷ unique-ys) with x ≟ y
+  remove' x (y ∷ ys) (_ ∷ unique-ys) with x ≟ᴬ y
   ... | yes x≡y = ⟨ ys ∣ unique-ys ⟩
   -- Note: Not very efficient! Checks if `y ∈ rec` again!
   ... | no ¬x≡y = y ∙ remove' x ys unique-ys
@@ -93,3 +95,6 @@ _⊈_ : Finset → Finset → Set
 
 _⊉_ : Finset → Finset → Set
 ⟨ xs ∣ _ ⟩ ⊉ ⟨ ys ∣ _ ⟩ = xs Subset.⊉ ys
+
+_⊆?_ : (xs : Finset) → (ys : Finset) → Dec (xs ⊆ ys)
+_⊆?_ xs ys = {!   !}

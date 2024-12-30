@@ -6,6 +6,7 @@ import Agda.Builtin.Bool as Agda
 import Data.Int as Int
 
 open import Language.Bee.Syntax.Common
+open import Language.Bee.Syntax.Effect
 open import Language.Bee.Syntax.Type
 
 
@@ -22,7 +23,7 @@ infixl 7 _`*_ -- _`/_ _`%_
 infixl 6 _`+_ _`-_
 infix  4 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_
 infix  1 `if_then_else_
-infixr 0 val_`=_⨾_ var_≔_⨾_ _≔_⨾_
+infixr 0 val_`=_⨾_ var_`in_≔_⨾_ _≔_⨾_
 
 record Module : Set
 data Declaration : Set
@@ -31,7 +32,7 @@ data Expression : Set
 data Operation : Set
 data Literal : Set
 -- data Pattern : Set
-Heap : Set
+Memory : Set
 data IsValue : Expression → Set
 data IsBasicValue : Expression → Set
 Value BasicValue : Set
@@ -42,8 +43,8 @@ record Module where
     main : Expression
 
 data Declaration where
-  --TS Don't know why you need the `lvars` for, you can deduce them from the expression
-  fun : Id → List Parameter → Expression → Declaration
+  --TS Don't know why we need the `lvars` for, we can deduce them from the expression
+  fun : Id → List Parameter → Effect → Type → Expression → Declaration
   val : Id → Expression → Declaration
 
 data Parameter where
@@ -57,13 +58,13 @@ data Expression where
   val_`=_⨾_ : Id → Expression → Expression → Expression
   `if_then_else_ : Expression → Expression → Expression → Expression
   adr : Ix → Expression
-  reg⟨_⟩_ : Heap → Expression → Expression
-  run : Expression → Expression
+  reg⟨_⟩_ : Memory → Expression → Expression
 
 data Operation where
   alloc : Id → Expression → Operation
   load : Expression → Operation
   store : Expression → Expression → Operation
+  run : Id → Expression → Operation
   panic : Operation
   calc : (Int → Int → Int) → Expression → Expression → Operation
   comp : (Int → Int → Agda.Bool) → Expression → Expression → Operation
@@ -76,14 +77,14 @@ data Literal where
 --   `_ : Id → Pattern
 --   lit : Literal → Pattern
 
-Heap = List (Id × BasicValue)
+Memory = List (Ix × BasicValue)
 
 
 ---- Values --------------------------------------------------------------------
 
 data IsValue where
   v-lit : ∀ {l} → IsValue (lit l)
-  v-opr : ∀ {o} → IsValue (opr o)
+  -- v-opr : ∀ {o} → IsValue (opr o)
   v-adr : ∀ {a} → IsValue (adr a)
 
 data IsBasicValue where
@@ -95,9 +96,9 @@ BasicValue = [ b ∈ Expression ∣ IsBasicValue b ]
 
 ---- Sugar ---------------------------------------------------------------------
 
-pattern var_≔_⨾_ x e r = val x `= opr alloc ◂ [ e ] ⨾ r
-pattern _! e = opr load ◂ [ e ]
-pattern _≔_⨾_ x e r = val "_" `= opr store ◂ [ x , e ] ⨾ r
+pattern var_`in_≔_⨾_ x r e c = val x `= opr (alloc r e) ⨾ c
+pattern _! e = opr (load e)
+pattern _≔_⨾_ x e c = val "_" `= opr (store x e) ⨾ c
 pattern _▶_◂_ x f xs = f ◂ (x ∷ xs)
 -- pattern `with_←_◂_⨾_ xs f as e = f ◂ (as ∷ᴿ fn⟨xs⟩ e)
 
@@ -141,7 +142,7 @@ _ = (+ 2) u8
 
 _ : Declaration
 _ =
-  fun "min" [ "a" `: U8 , "b" `: U8 ] (
+  fun "min" [ "a" `: U8 , "b" `: U8 ] ∅ U8 (
     val "x" `= `"a" `* (+ 2) u8 ⨾
     `if `"a" `< `"b"
       then `"a"

@@ -6,4 +6,5 @@ Id : Set
 Id = String
 
 Ix : Set
-Ix = Nat
+Ix = String
+-- Ix = Nat

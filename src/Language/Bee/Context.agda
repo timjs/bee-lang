@@ -53,6 +53,7 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 ...   | yes ⟨ τ , ∋x ⟩ = yes ⟨ τ , there x≢x′ ∋x ⟩
 ...   | no ¬∃ = no (ext∋ x≢x′ ¬∃)
 
+
 ---- Helpers -------------------------------------------------------------------
 
 ⟦_⟧ᵀ : BasicValue → Type
@@ -62,6 +63,12 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 ⟦ ⟨ lit ⟨⟩ ∣ _ ⟩ ⟧ᵀ = Unit
 
 -- This is the same operation as Leijen (2014) defines on heaps in Fig.5
-⌈_⌉_ : Heap → Id → Context
+⌈_⌉_ : Memory → Id → Context
 ⌈ [] ⌉ _ = ∅
-⌈ ⟨ x , b ⟩ ∷ Θ ⌉ h = ⌈ Θ ⌉ h , x ⦂ ⟦ b ⟧ᵀ
+⌈ ⟨ x , b ⟩ ∷ μ ⌉ h = ⌈ μ ⌉ h , x ⦂ ⟦ b ⟧ᵀ
+
+-- Free memory variables in a context
+free : Context → List Id
+free ∅ = []
+free (Γ , x ⦂ Ref m τ) = m ∷ free Γ
+free (Γ , _ ⦂ _) = free Γ

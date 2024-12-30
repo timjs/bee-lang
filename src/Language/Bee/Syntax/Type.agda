@@ -2,11 +2,10 @@
 module Language.Bee.Syntax.Type where
 
 import Data.String as String
-import Language.Bee.Syntax.Effect as Effect
-open Effect hiding (_≟_)
 
 open import Prelude
 open import Language.Bee.Syntax.Common
+open import Language.Bee.Syntax.Effect
 
 
 ---- Types ---------------------------------------------------------------------
