@@ -22,6 +22,9 @@ open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sym
 open import Function using (_∘_; _|>_) public
 
 
+infixr 8 _↦_
+
+pattern _↦_ a b = ⟨ a , b ⟩
 pattern ⟨_,_,_⟩ a b c = ⟨ a , ⟨ b , c ⟩ ⟩
 
 -- This is defined in Data.List, but as a function, not as a pattern

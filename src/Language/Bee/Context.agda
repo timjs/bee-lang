@@ -57,15 +57,17 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 ---- Helpers -------------------------------------------------------------------
 
 ⟦_⟧ᵀ : BasicValue → Type
-⟦ ⟨ lit (word s w _) ∣ _ ⟩ ⟧ᵀ = Word s w
-⟦ ⟨ lit True ∣ _ ⟩ ⟧ᵀ = Bool
-⟦ ⟨ lit False ∣ _ ⟩ ⟧ᵀ = Bool
-⟦ ⟨ lit ⟨⟩ ∣ _ ⟩ ⟧ᵀ = Unit
+⟦ ⟨ prim (word s w _) ∣ _ ⟩ ⟧ᵀ = Word s w
+⟦ ⟨ prim True ∣ _ ⟩ ⟧ᵀ = Bool
+⟦ ⟨ prim False ∣ _ ⟩ ⟧ᵀ = Bool
+⟦ ⟨ prim ⟨⟩ ∣ _ ⟩ ⟧ᵀ = Unit
+⟦ ⟨ None β ∣ _ ⟩ ⟧ᵀ = β `?
+⟦ ⟨ Some b ∣ b-some ∃ ⟩ ⟧ᵀ = ⟦ ⟨ b ∣ ∃ ⟩ ⟧ᵀ `?
 
--- This is the same operation as Leijen (2014) defines on heaps in Fig.5
+-- This is the same as the bar-operation Leijen (2014) defines on heaps in Fig.5
 ⌈_⌉_ : Memory → Id → Context
 ⌈ [] ⌉ _ = ∅
-⌈ ⟨ x , b ⟩ ∷ μ ⌉ h = ⌈ μ ⌉ h , x ⦂ ⟦ b ⟧ᵀ
+⌈ x ↦ b ∷ μ ⌉ r = ⌈ μ ⌉ r , x ⦂ Ref r ⟦ b ⟧ᵀ
 
 -- Free memory variables in a context
 free : Context → List Id

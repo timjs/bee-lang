@@ -4,100 +4,137 @@ open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
 
-infix  4 _⊢_⦂_∥_ _⊢ᴼ_⦂_∥_ _⊢ᴸ_⦂_
-
+infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_
+infix  4 _⊢ᴾ_⇒_ _⊢ᴼ_⇒_∥_
 
 ---- Typing judgements ---------------------------------------------------------
 
-data _⊢_⦂_∥_ : Context → Expression → Type → Effect → Set
-data _⊢ᴼ_⦂_∥_ : Context → Operation → Type → Effect → Set
-data _⊢ᴸ_⦂_ : Context → Literal → Type → Set
+data _⊢_⇐_∥_ : Context → Expression → Type → Effect → Set
+data _⊢_⇒_∥_ : Context → Expression → Type → Effect → Set
+-- data _⊢_⦂_⇒_ : Context → Expression → Type → Effect → Set
+-- data _⊢_∥_⇒_ : Context → Expression → Effect → Type → Set
+data _⊢ᴾ_⇒_ : Context → Primitive → Type → Set
+data _⊢ᴼ_⇒_∥_ : Context → Operation → Type → Effect → Set
 
-data _⊢ᴸ_⦂_ where
-  l-word : ∀ {Γ s w n} →
-    --------------------------
-    Γ ⊢ᴸ word s w n ⦂ Word s w
-  l-true : ∀ {Γ} →
-    ----------------
-    Γ ⊢ᴸ True ⦂ Bool
-  l-false : ∀ {Γ} →
-    ----------------
-    Γ ⊢ᴸ False ⦂ Bool
+data _⊢ᴾ_⇒_ where
   l-unit : ∀ {Γ} →
     --------------
-    Γ ⊢ᴸ ⟨⟩ ⦂ Unit
+    Γ ⊢ᴾ ⟨⟩ ⇒ Unit
+  l-true : ∀ {Γ} →
+    ---------------
+    Γ ⊢ᴾ True ⇒ Bool
+  l-false : ∀ {Γ} →
+    ----------------
+    Γ ⊢ᴾ False ⇒ Bool
+  l-word : ∀ {Γ s w n} →
+    -------------------------
+    Γ ⊢ᴾ word s w n ⇒ Word s w
+
+data _⊢ᴼ_⇒_∥_ where
+  o-calc : ∀ {Γ e₁ η₁ e₂ η₂ τ f} →
+    Γ ⊢ e₁ ⇒ τ ∥ η₁ →
+    Γ ⊢ e₂ ⇒ τ ∥ η₂ →
+    -------------------------------
+    Γ ⊢ᴼ calc f e₁ e₂ ⇒ τ ∥ η₁ ∪ η₂
+  o-comp : ∀ {Γ e₁ η₁ e₂ η₂ τ f} →
+    Γ ⊢ e₁ ⇒ τ ∥ η₁ →
+    Γ ⊢ e₂ ⇒ τ ∥ η₂ →
+    -------------------------------
+    Γ ⊢ᴼ comp f e₁ e₂ ⇒ τ ∥ η₁ ∪ η₂
+
 
 -- Note: Only when making `IsBasic β` an instance argument of `Ref_`
 -- *and* having an `IsBasic β` instance argument here
 -- *and* giving it a name,
--- resolution will fill it in automatically in the `Ref_` constructor.
-data _⊢ᴼ_⦂_∥_ where
-  o-alloc : ∀ {Γ r e₁ β₁ η₁} →
-    {β-ok : IsBasic β₁} →
-    Γ ⊢ e₁ ⦂ β₁ ∥ η₁ →
-    -----------------------------------------------
-    Γ ⊢ᴼ alloc r e₁ ⦂ Ref r β₁ {β-ok} ∥ Alloc r ∙ η₁
-  o-load : ∀ {Γ r e₁ β₁ η₁} →
-    {β-ok : IsBasic β₁} →
-    Γ ⊢ e₁ ⦂ Ref r β₁ {β-ok} ∥ η₁ →
-    -------------------------------
-    Γ ⊢ᴼ load e₁ ⦂ β₁ ∥ Load r ∙ η₁
-  o-store : ∀ {Γ r β₁₂ e₁ η₁ e₂ η₂} →
-    {β-ok : IsBasic β₁₂} →
-    Γ ⊢ e₁ ⦂ Ref r β₁₂ {β-ok} ∥ η₁ →
-    Γ ⊢ e₂ ⦂ β₁₂ ∥ η₂ →
-    --------------------------------------------
-    Γ ⊢ᴼ store e₁ e₂ ⦂ Unit ∥ Store r ∙ (η₁ ∪ η₂)
-  o-run : ∀ {Γ r e τ η} →
-    Γ ⊢ e ⦂ τ ∥ Mutate r ∪ η →
-    r ∉ free Γ →
-    -------------------
-    Γ ⊢ᴼ run r e ⦂ τ ∥ η
-  o-panic : ∀ {Γ τ} →
-    -------------------------
-    Γ ⊢ᴼ panic ⦂ τ ∥ Panic ∙ ∅
-
-data _⊢_⦂_∥_ where
+-- resolution will fill it in automatically in the `Ref_` constructor;
+-- we're making it a normal implicit here.
+data _⊢_⇒_∥_ where
+  -- Variables
   t-var : ∀ {Γ x τ} →
     Γ ∋ x ⦂ τ →
     --------------
-    Γ ⊢ ` x ⦂ τ ∥ ∅
+    Γ ⊢ ` x ⇒ τ ∥ ∅
+  -- Functions and binding
   t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-    Γ ⊢ e₀ ⦂ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
-    All (λ {⟨ eᵢ , τᵢ ⟩ → ∀ {ηᵢ} → Γ ⊢ eᵢ ⦂ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
+    Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
+    All (λ {⟨ eᵢ , τᵢ ⟩ → ∀ {ηᵢ} → Γ ⊢ eᵢ ⇒ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
     ------------------------------------------------------------------------
-    Γ ⊢ e₀ ◂ e⁺ ⦂ τ₀ ∥ η ∪ η₀ ∪ η⁺
+    Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
   -- t-app-1 : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-  --   Γ ⊢ e₀ ⦂ τ₁ ⟨ η ⟩→ τ₀ ∥ η₀ →
-  --   Γ ⊢ e₁ ⦂ τ₁ ∥ η₁ →
+  --   Γ ⊢ e₀ ⇒ τ₁ ⟨ η ⟩→ τ₀ ∥ η₀ →
+  --   Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
   --   η₁ ⊆ η⁺}) (zip e⁺ τ⁺) →
   --   ------------------------------
-  --   Γ ⊢ e₀ ◂ e⁺ ⦂ τ₀ ∥ η ∪ η₀ ∪ η⁺
-  t-lit : ∀ {Γ l π} →
-    Γ ⊢ᴸ l ⦂ π →
-    ----------------
-    Γ ⊢ lit l ⦂ π ∥ ∅
-  t-opr : ∀ {Γ o τ η} →
-    Γ ⊢ᴼ o ⦂ τ ∥ η →
-    ----------------
-    Γ ⊢ opr o ⦂ τ ∥ η
+  --   Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
   t-val : ∀ {Γ x₁ e₁ e₀ τ₁ τ₀ η₁ η₀} →
-    Γ ⊢ e₁ ⦂ τ₁ ∥ η₁ →
-    Γ , x₁ ⦂ τ₁ ⊢ e₀ ⦂ τ₀ ∥ η₀ →
+    Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
+    Γ , x₁ ⦂ τ₁ ⊢ e₀ ⇒ τ₀ ∥ η₀ →
     -----------------------------------
-    Γ ⊢ val x₁ `= e₁ ⨾ e₀ ⦂ τ₀ ∥ η₁ ∪ η₀
-  t-cond : ∀ {Γ e₀ e₁ e₂ τ₁₂ η₀ η₁ η₂} →
-    Γ ⊢ e₀ ⦂ Bool ∥ η₀ →
-    Γ ⊢ e₁ ⦂ τ₁₂ ∥ η₁ →
-    Γ ⊢ e₂ ⦂ τ₁₂ ∥ η₂ →
+    Γ ⊢ val x₁ `= e₁ ⨾ e₀ ⇒ τ₀ ∥ η₁ ∪ η₀
+  -- Primitives
+  t-prim : ∀ {Γ p π} →
+    Γ ⊢ᴾ p ⇒ π →
+    ----------------
+    Γ ⊢ prim p ⇒ π ∥ ∅
+  t-oper : ∀ {Γ o τ η} →
+    Γ ⊢ᴼ o ⇒ τ ∥ η →
+    ----------------
+    Γ ⊢ oper o ⇒ τ ∥ η
+  t-if : ∀ {Γ e₀ e₁ e₂ τ₁₂ η₀ η₁ η₂} →
+    Γ ⊢ e₀ ⇒ Bool ∥ η₀ →
+    Γ ⊢ e₁ ⇒ τ₁₂ ∥ η₁ →
+    Γ ⊢ e₂ ⇒ τ₁₂ ∥ η₂ →
     ----------------------------------------------
-    Γ ⊢ `if e₀ then e₁ else e₂ ⦂ τ₁₂ ∥ η₀ ∪ η₁ ∪ η₂
-  t-adr : ∀ {Γ a r β β-ok} →
-    Γ ∋ a ⦂ Ref r β {β-ok} →
-    -----------------------------
-    Γ ⊢ adr a ⦂ Ref r β {β-ok} ∥ ∅
-  t-reg : ∀ {Γ Θ r e τ η} →
+    Γ ⊢ `if e₀ then e₁ else e₂ ⇒ τ₁₂ ∥ η₀ ∪ η₁ ∪ η₂
+  -- Optionals
+  t-none : ∀ {Γ τ} →
+    ------------------
+    Γ ⊢ None τ ⇒ τ `? ∥ ∅
+  t-some : ∀ {Γ e₁ τ₁ η₁} →
+    Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
+    ------------------------
+    Γ ⊢ Some e₁ ⇒ τ₁ `? ∥ η₁
+  t-with : ∀ {Γ x₀ e₀ e₁ e₂ τ₀ τ₁₂ η₀ η₁ η₂} →
+    Γ ⊢ e₀ ⇒ τ₀ `? ∥ η₀ →
+    Γ ⊢ e₁ ⇒ τ₁₂ ∥ η₁ →
+    Γ , x₀ ⦂ τ₀ ⊢ e₂ ⇒ τ₁₂ ∥ η₂ →
+    --------------------------------------------------
+    Γ ⊢ `with x₀ ← e₀ else e₁ ⨾ e₂ ⇒ τ₁₂ ∥ η₀ ∪ η₁ ∪ η₂
+  -- References
+  o-new : ∀ {Γ r₁ e₁ β₁ η₁} →
+    Γ ⊢ e₁ ⇒ β₁ ∥ η₁ →
+    IsBasic β₁ →
+    -----------------------------------------
+    Γ ⊢ new r₁ e₁ ⇒ Ref r₁ β₁ ∥ Alloc r₁ ∙ η₁
+  o-load : ∀ {Γ r₁ e₁ β₁ η₁} →
+    Γ ⊢ e₁ ⇒ Ref r₁ β₁ ∥ η₁ →
+    -- IsBasic β₁ →
+    ----------------------------
+    Γ ⊢ e₁ ! ⇒ β₁ ∥ Load r₁ ∙ η₁
+  o-store : ∀ {Γ r₁ β₁₂ e₁ η₁ e₂ η₂} →
+    Γ ⊢ e₁ ⇒ Ref r₁ β₁₂ ∥ η₁ →
+    Γ ⊢ e₂ ⇒ β₁₂ ∥ η₂ →
+    -- IsBasic β₁₂ →
+    -----------------------------------------
+    Γ ⊢ e₁ ≔ e₂ ⇒ Unit ∥ Store r₁ ∙ (η₁ ∪ η₂)
+  t-adr : ∀ {Γ a r β} →
+    Γ ∋ a ⦂ Ref r β →
+    -----------------------
+    Γ ⊢ adr a ⇒ Ref r β ∥ ∅
+  t-reg : ∀ {Γ μ r e τ η} →
     Mutate r ⊆ η →
-    Γ ++ ⌈ Θ ⌉ r ⊢ e ⦂ τ ∥ η →
-    -------------------------
-    Γ ⊢ reg⟨ Θ ⟩ e ⦂ τ ∥ η
+    Γ ++ ⌈ μ ⌉ r ⊢ e ⇒ τ ∥ η →
+    --------------------------
+    Γ ⊢ reg⟨ μ ⟩ e ⇒ τ ∥ η
+
+data _⊢_⇐_∥_ where
+  -- Here we need to make `Mutate r` *available* as an effect,
+  -- so we should _check_ `e`.
+  -- Therefore, we also need to _check_ `run r e`.
+  -- `run` is also annotated with a region `r`,
+  -- so it is available for the `Mutate r` effect.
+  t-run : ∀ {Γ r e τ η} →
+    Γ ⊢ e ⇐ τ ∥ Mutate r ∪ η →
+    r ∉ free Γ →
+    -------------------
+    Γ ⊢ run r e ⇐ τ ∥ η

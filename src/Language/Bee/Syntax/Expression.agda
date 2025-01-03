@@ -22,7 +22,7 @@ infixl 7 _`*_ -- _`/_ _`%_
 -- infixr 7 _`∧_ _`∨_
 infixl 6 _`+_ _`-_
 infix  4 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_
-infix  1 `if_then_else_
+infix  1 `if_then_else_ `with_←_else_⨾_
 infixr 0 val_`=_⨾_ var_`in_≔_⨾_ _≔_⨾_
 
 record Module : Set
@@ -30,12 +30,15 @@ data Declaration : Set
 data Parameter : Set
 data Expression : Set
 data Operation : Set
-data Literal : Set
--- data Pattern : Set
+data Primitive : Set
+-- data Shape : Set
 Memory : Set
 data IsValue : Expression → Set
 data IsBasicValue : Expression → Set
-Value BasicValue : Set
+record Value : Set
+record BasicValue : Set
+-- Value : Set
+-- BasicValue : Set
 
 record Module where
   field
@@ -51,31 +54,40 @@ data Parameter where
   _`:_ : Id → Type → Parameter
 
 data Expression where
+  -- Variables
   `_ : Id → Expression
+  -- Functions and binding
   _◂_ : Expression → List Expression → Expression
-  lit : Literal → Expression
-  opr : Operation → Expression
   val_`=_⨾_ : Id → Expression → Expression → Expression
+  -- Primitives
+  prim : Primitive → Expression
+  oper : Operation → Expression
   `if_then_else_ : Expression → Expression → Expression → Expression
+  -- Optionals
+  None : Type → Expression
+  Some : Expression → Expression
+  `with_←_else_⨾_ : Id → Expression → Expression → Expression → Expression
+  -- References
+  new : Id → Expression → Expression
+  _! : Expression → Expression
+  _≔_ : Expression → Expression → Expression
+  run : Id → Expression → Expression
+  -- Not intended to be used by the programmer
   adr : Ix → Expression
   reg⟨_⟩_ : Memory → Expression → Expression
 
 data Operation where
-  alloc : Id → Expression → Operation
-  load : Expression → Operation
-  store : Expression → Expression → Operation
-  run : Id → Expression → Operation
-  panic : Operation
   calc : (Int → Int → Int) → Expression → Expression → Operation
   comp : (Int → Int → Agda.Bool) → Expression → Expression → Operation
 
-data Literal where
-  word : (s : Sign) → (w : Width) → Int → Literal
-  True False ⟨⟩ : Literal
+data Primitive where
+  ⟨⟩ : Primitive
+  True False : Primitive
+  word : (s : Sign) → (w : Width) → Int → Primitive
 
--- data Pattern where
---   `_ : Id → Pattern
---   lit : Literal → Pattern
+-- data Shape where
+--   `_ : Id → Shape
+--   prim : Primitive → Shape
 
 Memory = List (Ix × BasicValue)
 
@@ -83,49 +95,82 @@ Memory = List (Ix × BasicValue)
 ---- Values --------------------------------------------------------------------
 
 data IsValue where
-  v-lit : ∀ {l} → IsValue (lit l)
-  -- v-opr : ∀ {o} → IsValue (opr o)
-  v-adr : ∀ {a} → IsValue (adr a)
+  v-prim : ∀ {l} →
+    --------------
+    IsValue (prim l)
+  v-adr : ∀ {a} →
+    ---------------
+    IsValue (adr a)
+  v-none : ∀ {τ} →
+    ----------------
+    IsValue (None τ)
+  v-some : ∀ {v} →
+    IsValue v →
+    ----------------
+    IsValue (Some v)
+  -- v-fun : ∀ {x τ⁺ τ₀ η} →
+  --   Γ ⊢ x ⦂ τ⁺ ⟨ η ⟩→ τ₀ ∥ ∅
+  --   ------------------------
+  --   IsValue (` x)
 
 data IsBasicValue where
-  b-lit : ∀ {l} → IsBasicValue (lit l)
+  b-prim : ∀ {l} → IsBasicValue (prim l)
+  b-none : ∀ {β} → IsBasic β → IsBasicValue (None β)
+  b-some : ∀ {b} → IsBasicValue b → IsBasicValue (Some b)
 
-Value = [ v ∈ Expression ∣ IsValue v ]
-BasicValue = [ b ∈ Expression ∣ IsBasicValue b ]
+b-some-injective : ∀ {b} → IsBasicValue (Some b) → IsBasicValue b
+b-some-injective (b-some ∃) = ∃
+
+-- Value = [ v ∈ Expression ∣ IsValue v ]
+record Value where
+  constructor ⟨_∣_⟩
+  field
+    expression : Expression
+    proof : IsValue expression
+
+-- BasicValue = [ b ∈ Expression ∣ IsBasicValue b ]
+record BasicValue where
+  -- Because `Memory` is part of `Expression`s,
+  -- `BasicValue` is mutual recursive with it.
+  inductive
+  constructor ⟨_∣_⟩
+  field
+    expression : Expression
+    proof : IsBasicValue expression
 
 
 ---- Sugar ---------------------------------------------------------------------
 
-pattern var_`in_≔_⨾_ x r e c = val x `= opr (alloc r e) ⨾ c
-pattern _! e = opr (load e)
-pattern _≔_⨾_ x e c = val "_" `= opr (store x e) ⨾ c
+pattern var_`in_≔_⨾_ x r e c = val x `= new r e ⨾ c
+-- pattern _! e = oper (load e)
+pattern _≔_⨾_ x e c = val "_" `= (x ≔ e) ⨾ c
 pattern _▶_◂_ x f xs = f ◂ (x ∷ xs)
--- pattern `with_←_◂_⨾_ xs f as e = f ◂ (as ∷ᴿ fn⟨xs⟩ e)
+-- pattern `with_←_◂_⨾_ xs f as c = f ◂ (as ∷ᴿ fn⟨ xs ⟩ c)
 
-pattern _u8  n = lit (word unsigned  8bits n)
-pattern _u16 n = lit (word unsigned 16bits n)
-pattern _u32 n = lit (word unsigned 32bits n)
-pattern _u64 n = lit (word unsigned 64bits n)
+pattern _u8  n = prim (word unsigned  8bits n)
+pattern _u16 n = prim (word unsigned 16bits n)
+pattern _u32 n = prim (word unsigned 32bits n)
+pattern _u64 n = prim (word unsigned 64bits n)
 
-pattern _i8  n = lit (word signed  8bits n)
-pattern _i16 n = lit (word signed 16bits n)
-pattern _i32 n = lit (word signed 32bits n)
-pattern _i64 n = lit (word signed 64bits n)
+pattern _i8  n = prim (word signed  8bits n)
+pattern _i16 n = prim (word signed 16bits n)
+pattern _i32 n = prim (word signed 32bits n)
+pattern _i64 n = prim (word signed 64bits n)
 
 _`+_ _`-_ _`*_ : Expression → Expression → Expression
-a `+ b = opr (calc Int._+_ a b)
-a `- b = opr (calc Int._-_ a b)
-a `* b = opr (calc Int._*_ a b)
--- a `/ b = opr (calc Int._/_ a b)
--- a `% b = opr (calc Int._%_ a b)
+a `+ b = oper (calc Int._+_ a b)
+a `- b = oper (calc Int._-_ a b)
+a `* b = oper (calc Int._*_ a b)
+-- a `/ b = oper (calc Int._/_ a b)
+-- a `% b = oper (calc Int._%_ a b)
 
 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_ : Expression → Expression → Expression
-a `< b = opr (comp Int._<ᵇ_ a b)
-a `≤ b = opr (comp Int._≤ᵇ_ a b)
-a `≡ b = opr (comp Int._≡ᵇ_ a b)
-a `≢ b = opr (comp Int._≢ᵇ_ a b)
-a `≥ b = opr (comp Int._≥ᵇ_ a b)
-a `> b = opr (comp Int._>ᵇ_ a b)
+a `< b = oper (comp Int._<ᵇ_ a b)
+a `≤ b = oper (comp Int._≤ᵇ_ a b)
+a `≡ b = oper (comp Int._≡ᵇ_ a b)
+a `≢ b = oper (comp Int._≢ᵇ_ a b)
+a `≥ b = oper (comp Int._≥ᵇ_ a b)
+a `> b = oper (comp Int._>ᵇ_ a b)
 
 -- infix 8 _[_] _[_,_] _[_,_,_] _[_,_,_,_] _[_,_,_,_,_]
 -- pattern _[_] f a = f ◂ [ a ]
