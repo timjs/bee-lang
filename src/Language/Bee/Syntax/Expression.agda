@@ -122,7 +122,7 @@ b-some-injective (b-some ∃) = ∃
 
 -- Value = [ v ∈ Expression ∣ IsValue v ]
 record Value where
-  constructor ⟨_∣_⟩
+  constructor _,_
   field
     expression : Expression
     proof : IsValue expression
@@ -133,7 +133,7 @@ record Basic where
   -- `Basic` is mutual recursive with it
   -- and we need to declare this record inductive or coinductive.
   inductive
-  constructor ⟨_∣_⟩
+  constructor _,_
   field
     expression : Expression
     proof : IsBasic expression
@@ -185,14 +185,14 @@ a `> b = oper (comp Int._>ᵇ_ a b)
 _ : Expression
 _ = (+ 2) u8
 
-_ : Declaration
-_ =
-  fun "min" [ "a" `: U8 , "b" `: U8 ] ∅ U8 (
-    val "x" `= `"a" `* (+ 2) u8 ⨾
-    `if `"a" `< `"b"
-      then `"a"
-      else `"b"
-  )
+-- _ : Declaration
+-- _ =
+--   fun "min" [ "a" `: U8 , "b" `: U8 ] ∅ U8 (
+--     val "x" `= `"a" `* (+ 2) u8 ⨾
+--     `if `"a" `< `"b"
+--       then `"a"
+--       else `"b"
+--   )
 
 {-
       val "c" `= `"a" `+ `"b" ⨾

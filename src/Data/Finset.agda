@@ -38,7 +38,6 @@ open Finset
 
 ---- Construction --------------------------------------------------------------
 
--- ⁅⁆ : Finset
 pattern ∅ = ⟨ [] ∣ [] ⟩
 
 pattern _∙⟨_∣_⟩ x xs unique-xs = ⟨ x ∷ xs ∣ _ ∷ unique-xs ⟩
@@ -52,9 +51,9 @@ _∪_ : Finset → Finset → Finset
 ∅ ∪ ys = ys
 -- OK, but not with Irrelevant:
 x ∙⟨ xs ∣ unique-xs ⟩ ∪ ys = x ∙ ⟨ xs ∣ unique-xs ⟩ ∪ ys
--- NOT OKm because of irrelevant pattern match:
+-- NOT OK, because of irrelevant pattern match:
 -- ⟨ x ∷ xss ∣ .(_ ∷ unique-xss) ⟩ ∪ ys = x ∙ ⟨ xss ∣ unique-xss ⟩ ∪ ys
--- NOT OKm because of lack of termination proof on `tail`:
+-- NOT OK, because of lack of termination proof on `tail`:
 -- ⟨ x ∷ xss ∣ unique-xs ⟩ ∪ ys = x ∙ ⟨ xss ∣ tail unique-xs ⟩ ∪ ys
 -- ⟨ x ∷ xss ∣ unique-xs@(_ ∷ _) ⟩ ∪ ys = x ∙ ⟨ xss ∣ tail unique-xs ⟩ ∪ ys
 

@@ -63,14 +63,14 @@ data IsBasic where
 
 -- Basic = [ β ∈ Mono ∣ IsBasic β ]
 record Basic where
-  constructor ⟨_∣_⟩
+  constructor _,_
   field
     type : Mono
     proof : IsBasic type
 
 -- Primitive = [ π ∈ Mono ∣ IsPrimitive π ]
 record Primitive where
-  constructor ⟨_∣_⟩
+  constructor _,_
   field
     type : Mono
     proof : IsPrimitive type
