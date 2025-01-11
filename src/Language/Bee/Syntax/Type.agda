@@ -37,7 +37,15 @@ data Mono where
   -- Options
   _`? : Mono → Mono
   -- References
-  Ref : Id → Mono → Mono
+  {-  #note[If we enforce a basic type here:
+      - we need a translation from basic values to basic types,
+        this is used to convert `Memory` to a `Context`;
+      - our judgement for `new` needs a `IsBasic` predicate;
+      - our judgments for `load`, `store`, and `adr` have a `β-ok`
+        which can be reused.
+      ]
+  -}
+  Ref : Id → (β : Mono) → {IsBasic β}  → Mono
   -- Primitives
   Unit Bool : Mono
   Word : Sign → Width → Mono

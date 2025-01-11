@@ -103,25 +103,22 @@ data _⊢_⇒_∥_ where
   -- References
   t-new : ∀ {Γ r₁ e₁ β₁ η₁} →
     Γ ⊢ e₁ ⇒ β₁ ∥ η₁ →
-    Type.IsBasic β₁ →
+    {β-ok : Type.IsBasic β₁} →
     -----------------------------------------
-    Γ ⊢ new r₁ e₁ ⇒ Ref r₁ β₁  ∥ Alloc r₁ ∙ η₁
-  t-load : ∀ {Γ r₁ e₁ β₁ η₁} →
-    Γ ⊢ e₁ ⇒ Ref r₁ β₁ ∥ η₁ →
-    Type.IsBasic β₁ →
+    Γ ⊢ new r₁ e₁ ⇒ Ref r₁ β₁ {β-ok} ∥ Alloc r₁ ∙ η₁
+  t-load : ∀ {Γ r e β β-ok η} →
+    Γ ⊢ e ⇒ Ref r β {β-ok} ∥ η →
     ----------------------------
-    Γ ⊢ e₁ ! ⇒ β₁ ∥ Load r₁ ∙ η₁
-  t-store : ∀ {Γ r₁ β₁₂ e₁ η₁ e₂ η₂} →
-    Γ ⊢ e₁ ⇒ Ref r₁ β₁₂ ∥ η₁ →
+    Γ ⊢ e ! ⇒ β ∥ Load r ∙ η
+  t-store : ∀ {Γ r₁ β₁₂ β₁₂-ok e₁ η₁ e₂ η₂} →
+    Γ ⊢ e₁ ⇒ Ref r₁ β₁₂ {β₁₂-ok} ∥ η₁ →
     Γ ⊢ e₂ ⇒ β₁₂ ∥ η₂ →
-    Type.IsBasic β₁₂ →
     -----------------------------------------
     Γ ⊢ e₁ ≔ e₂ ⇒ Unit ∥ Store r₁ ∙ (η₁ ∪ η₂)
-  t-adr : ∀ {Γ a r β} →
-    Γ ∋ a ⦂ Ref r β →
-    Type.IsBasic β →
+  t-adr : ∀ {Γ a r β β-ok} →
+    Γ ∋ a ⦂ Ref r β {β-ok} →
     -----------------------
-    Γ ⊢ adr a ⇒ Ref r β ∥ ∅
+    Γ ⊢ adr a ⇒ Ref r β {β-ok} ∥ ∅
   t-reg : ∀ {Γ μ r e τ η} →
     Mutate r ⊆ η →
     Γ ++ ⌈ μ ⌉ r ⊢ e ⇒ τ ∥ η →
