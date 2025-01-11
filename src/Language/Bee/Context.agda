@@ -56,14 +56,22 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 
 ---- Helpers -------------------------------------------------------------------
 
-⟦_⟧ᵀ : Basic → Type.Basic
-⟦ ⟨ prim (word s w _) ∣ b-prim ⟩ ⟧ᵀ = ⟨ Word s w ∣ β-Word ⟩
-⟦ ⟨ prim True ∣ b-prim ⟩ ⟧ᵀ = ⟨ Bool ∣ β-Bool ⟩
-⟦ ⟨ prim False ∣ b-prim ⟩ ⟧ᵀ = ⟨ Bool ∣ β-Bool ⟩
-⟦ ⟨ prim ⟨⟩ ∣ b-prim ⟩ ⟧ᵀ = ⟨ Unit ∣ β-Unit ⟩
-⟦ ⟨ None β ∣ b-none b-other ⟩ ⟧ᵀ = ⟨ β `? ∣ β-Option b-other ⟩
-⟦ ⟨ Some b ∣ b-some b-other ⟩ ⟧ᵀ with ⟦ ⟨ b ∣ b-other ⟩ ⟧ᵀ
-... | ⟨ β ∣ β-other ⟩ = ⟨ β `? ∣ β-Option β-other ⟩
+-- ⟦_⟧ᵀ : Basic → Type.Basic
+-- ⟦ ⟨ prim (word s w _) ∣ b-prim ⟩ ⟧ᵀ = ⟨ Word s w ∣ β-Word ⟩
+-- ⟦ ⟨ prim True ∣ b-prim ⟩ ⟧ᵀ = ⟨ Bool ∣ β-Bool ⟩
+-- ⟦ ⟨ prim False ∣ b-prim ⟩ ⟧ᵀ = ⟨ Bool ∣ β-Bool ⟩
+-- ⟦ ⟨ prim ⟨⟩ ∣ b-prim ⟩ ⟧ᵀ = ⟨ Unit ∣ β-Unit ⟩
+-- ⟦ ⟨ None β ∣ b-none b-other ⟩ ⟧ᵀ = ⟨ β `? ∣ β-Option b-other ⟩
+-- ⟦ ⟨ Some b ∣ b-some b-other ⟩ ⟧ᵀ with ⟦ ⟨ b ∣ b-other ⟩ ⟧ᵀ
+-- ... | ⟨ β ∣ β-other ⟩ = ⟨ β `? ∣ β-Option β-other ⟩
+
+⟦_⟧ᵀ : Basic → Mono
+⟦ ⟨ prim (word s w _) ∣ b-prim ⟩ ⟧ᵀ =  Word s w
+⟦ ⟨ prim True ∣ b-prim ⟩ ⟧ᵀ = Bool
+⟦ ⟨ prim False ∣ b-prim ⟩ ⟧ᵀ = Bool
+⟦ ⟨ prim ⟨⟩ ∣ b-prim ⟩ ⟧ᵀ = Unit
+⟦ ⟨ None β ∣ b-none b-other ⟩ ⟧ᵀ = β `?
+⟦ ⟨ Some b ∣ b-some b-other ⟩ ⟧ᵀ = ⟦ ⟨ b ∣ b-other ⟩ ⟧ᵀ `?
 
 -- This is the same as the bar-operation Leijen (2014) defines on heaps in Fig.5
 -- However, because our references need to be of basic type,

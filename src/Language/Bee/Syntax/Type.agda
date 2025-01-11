@@ -37,7 +37,7 @@ data Mono where
   -- Options
   _`? : Mono → Mono
   -- References
-  Ref : Id → Basic → Mono
+  Ref : Id → Mono → Mono
   -- Primitives
   Unit Bool : Mono
   Word : Sign → Width → Mono
@@ -55,7 +55,6 @@ data IsBasic where
 
 -- Basic = [ β ∈ Mono ∣ IsBasic β ]
 record Basic where
-  inductive
   constructor ⟨_∣_⟩
   field
     type : Mono

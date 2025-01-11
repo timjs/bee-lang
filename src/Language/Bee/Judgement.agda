@@ -9,12 +9,12 @@ infix  4 _⊢ᴾ_⇒_ _⊢ᴼ_⇒_∥_
 
 ---- Typing judgements ---------------------------------------------------------
 
-data _⊢_⇐_∥_ : Context → Expression → Type → Effect → Set
-data _⊢_⇒_∥_ : Context → Expression → Type → Effect → Set
--- data _⊢_⦂_⇒_ : Context → Expression → Type → Effect → Set
--- data _⊢_∥_⇒_ : Context → Expression → Effect → Type → Set
-data _⊢ᴾ_⇒_ : Context → Primitive → Type → Set
-data _⊢ᴼ_⇒_∥_ : Context → Operation → Type → Effect → Set
+data _⊢_⇐_∥_ : Context → Expression → Mono → Effect → Set
+data _⊢_⇒_∥_ : Context → Expression → Mono → Effect → Set
+-- data _⊢_⦂_⇒_ : Context → Expression → Mono → Effect → Set
+-- data _⊢_∥_⇒_ : Context → Expression → Effect → Mono → Set
+data _⊢ᴾ_⇒_ : Context → Primitive → Mono → Set
+data _⊢ᴼ_⇒_∥_ : Context → Operation → Mono → Effect → Set
 
 data _⊢ᴾ_⇒_ where
   l-unit : ∀ {Γ} →
@@ -101,24 +101,25 @@ data _⊢_⇒_∥_ where
     --------------------------------------------------
     Γ ⊢ `with x₀ ← e₀ else e₁ ⨾ e₂ ⇒ τ₁₂ ∥ η₀ ∪ η₁ ∪ η₂
   -- References
-  o-new : ∀ {Γ r₁ e₁ β₁ η₁} →
+  t-new : ∀ {Γ r₁ e₁ β₁ η₁} →
     Γ ⊢ e₁ ⇒ β₁ ∥ η₁ →
-    IsBasic β₁ →
+    Type.IsBasic β₁ →
     -----------------------------------------
-    Γ ⊢ new r₁ e₁ ⇒ Ref r₁ β₁ ∥ Alloc r₁ ∙ η₁
-  o-load : ∀ {Γ r₁ e₁ β₁ η₁} →
+    Γ ⊢ new r₁ e₁ ⇒ Ref r₁ β₁  ∥ Alloc r₁ ∙ η₁
+  t-load : ∀ {Γ r₁ e₁ β₁ η₁} →
     Γ ⊢ e₁ ⇒ Ref r₁ β₁ ∥ η₁ →
-    -- IsBasic β₁ →
+    Type.IsBasic β₁ →
     ----------------------------
     Γ ⊢ e₁ ! ⇒ β₁ ∥ Load r₁ ∙ η₁
-  o-store : ∀ {Γ r₁ β₁₂ e₁ η₁ e₂ η₂} →
+  t-store : ∀ {Γ r₁ β₁₂ e₁ η₁ e₂ η₂} →
     Γ ⊢ e₁ ⇒ Ref r₁ β₁₂ ∥ η₁ →
     Γ ⊢ e₂ ⇒ β₁₂ ∥ η₂ →
-    -- IsBasic β₁₂ →
+    Type.IsBasic β₁₂ →
     -----------------------------------------
     Γ ⊢ e₁ ≔ e₂ ⇒ Unit ∥ Store r₁ ∙ (η₁ ∪ η₂)
   t-adr : ∀ {Γ a r β} →
     Γ ∋ a ⦂ Ref r β →
+    Type.IsBasic β →
     -----------------------
     Γ ⊢ adr a ⇒ Ref r β ∥ ∅
   t-reg : ∀ {Γ μ r e τ η} →
@@ -138,3 +139,9 @@ data _⊢_⇐_∥_ where
     r ∉ free Γ →
     -------------------
     Γ ⊢ run r e ⇐ τ ∥ η
+  t-sub : ∀ {Γ e τ τ′ η η′} →
+    Γ ⊢ e ⇒ τ′ ∥ η′ →
+    τ′ ≡ τ →
+    η′ ⊆ η →
+    -----------------
+    Γ ⊢ e ⇐ τ ∥ η
