@@ -1,4 +1,4 @@
-module Language.Bee.Check where
+module Language.Bee.Synthesize where
 
 import Data.String as String
 import Language.Bee.Syntax.Effect as Effect
