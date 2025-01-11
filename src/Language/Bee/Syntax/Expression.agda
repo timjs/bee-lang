@@ -4,10 +4,11 @@ open import Prelude hiding (if_then_else_; _≡_; _≢_)
 
 import Agda.Builtin.Bool as Agda
 import Data.Int as Int
+import Language.Bee.Syntax.Type as Type
 
 open import Language.Bee.Syntax.Common
 open import Language.Bee.Syntax.Effect
-open import Language.Bee.Syntax.Type
+open import Language.Bee.Syntax.Type hiding (IsBasic; Basic; IsPrimitive; Primitive)
 
 
 ---- Expressions ---------------------------------------------------------------
@@ -34,11 +35,9 @@ data Primitive : Set
 -- data Shape : Set
 Memory : Set
 data IsValue : Expression → Set
-data IsBasicValue : Expression → Set
+data IsBasic : Expression → Set
 record Value : Set
-record BasicValue : Set
--- Value : Set
--- BasicValue : Set
+record Basic : Set
 
 record Module where
   field
@@ -47,11 +46,11 @@ record Module where
 
 data Declaration where
   --TS Don't know why we need the `lvars` for, we can deduce them from the expression
-  fun : Id → List Parameter → Effect → Type → Expression → Declaration
+  fun : Id → List Parameter → Effect → Type.Mono → Expression → Declaration
   val : Id → Expression → Declaration
 
 data Parameter where
-  _`:_ : Id → Type → Parameter
+  _`:_ : Id → Type.Mono → Parameter
 
 data Expression where
   -- Variables
@@ -64,7 +63,7 @@ data Expression where
   oper : Operation → Expression
   `if_then_else_ : Expression → Expression → Expression → Expression
   -- Optionals
-  None : Type → Expression
+  None : Type.Mono → Expression
   Some : Expression → Expression
   `with_←_else_⨾_ : Id → Expression → Expression → Expression → Expression
   -- References
@@ -89,7 +88,7 @@ data Primitive where
 --   `_ : Id → Shape
 --   prim : Primitive → Shape
 
-Memory = List (Ix × BasicValue)
+Memory = List (Ix × Basic)
 
 
 ---- Values --------------------------------------------------------------------
@@ -113,12 +112,12 @@ data IsValue where
   --   ------------------------
   --   IsValue (` x)
 
-data IsBasicValue where
-  b-prim : ∀ {l} → IsBasicValue (prim l)
-  b-none : ∀ {β} → IsBasic β → IsBasicValue (None β)
-  b-some : ∀ {b} → IsBasicValue b → IsBasicValue (Some b)
+data IsBasic where
+  b-prim : ∀ {l} → IsBasic (prim l)
+  b-none : ∀ {β} → Type.IsBasic β → IsBasic (None β)
+  b-some : ∀ {b} → IsBasic b → IsBasic (Some b)
 
-b-some-injective : ∀ {b} → IsBasicValue (Some b) → IsBasicValue b
+b-some-injective : ∀ {b} → IsBasic (Some b) → IsBasic b
 b-some-injective (b-some ∃) = ∃
 
 -- Value = [ v ∈ Expression ∣ IsValue v ]
@@ -128,15 +127,16 @@ record Value where
     expression : Expression
     proof : IsValue expression
 
--- BasicValue = [ b ∈ Expression ∣ IsBasicValue b ]
-record BasicValue where
+-- Basic = [ b ∈ Expression ∣ IsBasic b ]
+record Basic where
   -- Because `Memory` is part of `Expression`s,
-  -- `BasicValue` is mutual recursive with it.
+  -- `Basic` is mutual recursive with it
+  -- and we need to declare this record inductive or coinductive.
   inductive
   constructor ⟨_∣_⟩
   field
     expression : Expression
-    proof : IsBasicValue expression
+    proof : IsBasic expression
 
 
 ---- Sugar ---------------------------------------------------------------------

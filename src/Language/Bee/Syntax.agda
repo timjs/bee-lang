@@ -1,9 +1,10 @@
 module Language.Bee.Syntax where
 
-import Language.Bee.Syntax.Type as Type
 
 open import Language.Bee.Syntax.Common public
-open import Language.Bee.Syntax.Expression public
 open import Language.Bee.Syntax.Effect public
+open import Language.Bee.Syntax.Expression public
 
-open Type hiding (_≟_) public
+import Language.Bee.Syntax.Type
+module Type = Language.Bee.Syntax.Type
+open Type hiding (IsBasic; Basic; IsPrimitive; Primitive; _≟_) public

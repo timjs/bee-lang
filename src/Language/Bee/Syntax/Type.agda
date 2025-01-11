@@ -25,21 +25,22 @@ data Sign : Set where
 data Width : Set where
   8bits 16bits 32bits 64bits : Width
 
-data Type : Set
-data IsPrimitive : Type → Set
-data IsBasic : Type → Set
-BasicType PrimitiveType : Set
+data Mono : Set
+data IsPrimitive : Mono → Set
+data IsBasic : Mono → Set
+record Basic : Set
+record Primitive : Set
 
-data Type where
+data Mono where
   -- Arrows
-  _⟨_⟩→_ : List Type → Effect → Type → Type
+  _⟨_⟩→_ : List Mono → Effect → Mono → Mono
   -- Options
-  _`? : Type → Type
+  _`? : Mono → Mono
   -- References
-  Ref : Id → (β : Type) → Type
+  Ref : Id → Basic → Mono
   -- Primitives
-  Unit Bool : Type
-  Word : Sign → Width → Type
+  Unit Bool : Mono
+  Word : Sign → Width → Mono
 
 data IsPrimitive where
   π-Unit : IsPrimitive Unit
@@ -50,18 +51,30 @@ data IsBasic where
   β-Unit : IsBasic Unit
   β-Bool : IsBasic Bool
   β-Word : ∀ {s : Sign} {w : Width} → IsBasic (Word s w)
-  β-Option : ∀ {β : Type} → IsBasic β → IsBasic (β `?)
+  β-Option : ∀ {β : Mono} → IsBasic β → IsBasic (β `?)
 
-BasicType = [ β ∈ Type ∣ IsBasic β ]
-PrimitiveType = [ π ∈ Type ∣ IsPrimitive π ]
+-- Basic = [ β ∈ Mono ∣ IsBasic β ]
+record Basic where
+  inductive
+  constructor ⟨_∣_⟩
+  field
+    type : Mono
+    proof : IsBasic type
 
-prim-is-basic : (τ : Type) → (IsPrimitive τ) → IsBasic τ
+-- Primitive = [ π ∈ Mono ∣ IsPrimitive π ]
+record Primitive where
+  constructor ⟨_∣_⟩
+  field
+    type : Mono
+    proof : IsPrimitive type
+
+prim-is-basic : (τ : Mono) → (IsPrimitive τ) → IsBasic τ
 prim-is-basic τ = {!   !}
 
 β-Option-injective : ∀ {β} → IsBasic (β `?) → IsBasic β
 β-Option-injective (β-Option ∃) = ∃
 
-basic? : (β : Type) → Dec (IsBasic β)
+basic? : (β : Mono) → Dec (IsBasic β)
 basic? (_ ⟨ _ ⟩→ _) = no (λ ())
 basic? (Ref _ _) = no (λ ())
 basic? (β `?) with basic? β
@@ -86,8 +99,8 @@ pattern I64 = Word signed 64bits
 
 ---- Equality ------------------------------------------------------------------
 
-_≟_ : (τ₁ : Type) → (τ₂ : Type) → Dec (τ₁ ≡ τ₂)
-(τ⁺ ⟨ η ⟩→ τ₀) ≟ (τ′⁺ ⟨ η′ ⟩→ τ′₀) = {!   !}
+_≟_ : (τ₁ : Mono) → (τ₂ : Mono) → Dec (τ₁ ≡ τ₂)
+(τ⁺ ⟨ η ⟩→ τ₀) ≟ (τ′⁺ ⟨ η′ ⟩→ τ′₀) = yes {!   !}
 (τ⁺ ⟨ η ⟩→ τ₀) ≟ τ₂ `? = no (λ ())
 (τ⁺ ⟨ η ⟩→ τ₀) ≟ Ref h₂ τ₂ = no (λ ())
 (τ⁺ ⟨ η ⟩→ τ₀) ≟ Unit = no (λ ())
@@ -95,7 +108,7 @@ _≟_ : (τ₁ : Type) → (τ₂ : Type) → Dec (τ₁ ≡ τ₂)
 (τ⁺ ⟨ η ⟩→ τ₀) ≟ Word s₂ w₂ = no (λ ())
 
 τ₁ `? ≟ (τ⁺ ⟨ η ⟩→ τ₀) = no (λ ())
-τ₁ `? ≟ τ₂ `? = {!   !}
+τ₁ `? ≟ τ₂ `? = yes {!   !}
 τ₁ `? ≟ Ref h₂ τ₂ = no (λ ())
 τ₁ `? ≟ Unit = no (λ ())
 τ₁ `? ≟ Bool = no (λ ())
@@ -103,7 +116,7 @@ _≟_ : (τ₁ : Type) → (τ₂ : Type) → Dec (τ₁ ≡ τ₂)
 
 Ref h₁ τ₁ ≟ (τ⁺ ⟨ η ⟩→ τ₀) = no (λ ())
 Ref h₁ τ₁ ≟ τ₂ `? = no (λ ())
-Ref h₁ τ₁ ≟ Ref h₂ τ₂ = {!   !}
+Ref h₁ τ₁ ≟ Ref h₂ τ₂ = yes {!   !}
 -- Ref h₁ τ₁ ≟ Ref h₂ τ₂ with h₁ String.≟ h₂ | τ₁ ≟ τ₂
 -- ... | yes refl | yes refl = {!   !}
 Ref h₁ τ₁ ≟ Unit = no (λ ())
@@ -129,20 +142,20 @@ Word s₁ w₁ ≟ τ₂ `? = no (λ ())
 Word s₁ w₁ ≟ Ref h₂ τ₂ = no (λ ())
 Word s₁ w₁ ≟ Unit = no (λ ())
 Word s₁ w₁ ≟ Bool = no (λ ())
-Word s₁ w₁ ≟ Word s₂ w₂ = {!   !}
+Word s₁ w₁ ≟ Word s₂ w₂ = yes {!   !}
 -- Word s₁ w₁ ≟ Word s₂ w₂ with s₁ Sign.≟ s₂ | w₁ Width.≟ w₂
 -- ... | yes refl | yes refl = {!   !}
 
 
 ---- Primitives ----------------------------------------------------------------
 
--- ⌈_⌉ : ∀ {A B : Set} → (A → A → B) → Type
+-- ⌈_⌉ : ∀ {A B : Set} → (A → A → B) → Mono
 -- ⌈ _+_ ⌉ = ∀ {s w} → [ Word s w , Word s w ] ⟨ ∅ ⟩→ Word s w
 
 
 ---- Examples ------------------------------------------------------------------
 
--- f→t : {A B C : Set} -> (A -> B -> C) -> Type
+-- f→t : {A B C : Set} -> (A -> B -> C) -> Mono
 -- f→t (_∧_) = [ Bool , Bool ] ⟨ [] ⟩→ Bool
 
 -- ε₁ : Effect
