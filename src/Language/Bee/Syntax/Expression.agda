@@ -18,7 +18,7 @@ infix  9 _u8 _u16 _u32 _u64
 infix  9 _i8 _i16 _i32 _i64
 -- infix  8 `¬_
 infixl 8  _◂_
-infix  7 reg⟨_⟩_
+-- infix  7 reg⟨_⟩_
 infixl 7 _`*_ -- _`/_ _`%_
 -- infixr 7 _`∧_ _`∨_
 infixl 6 _`+_ _`-_
@@ -73,7 +73,7 @@ data Expression where
   run : Id → Expression → Expression
   -- Not intended to be used by the programmer
   adr : Ix → Expression
-  reg⟨_⟩_ : Memory → Expression → Expression
+  mem : Id → Memory → Expression → Expression
 
 data Operation where
   calc : (Int → Int → Int) → Expression → Expression → Operation

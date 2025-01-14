@@ -5,7 +5,7 @@ open import Data.Bool using (true; false; if_then_else_) public
 open import Data.Empty using (⊥) public
 open import Data.Int using (Int; +_) public
 open import Data.List using (List; []; _∷_; zip) public
-open import Data.List.Membership.Propositional using (_∈_; _∉_) public
+-- open import Data.List.Membership.Propositional using (_∈_; _∉_) public
 open import Data.List.Relation.Unary.All using (All; all?) public
 open import Data.Nat using () renaming (ℕ to Nat) public
 open import Data.Product using (_×_; _,_; ∃; ∃-syntax) public
