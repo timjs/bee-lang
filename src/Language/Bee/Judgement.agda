@@ -4,13 +4,14 @@ open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
 
-infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_
+infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_ _⊢_⇛_∥_
 infix  4 _⊢ᴾ_⇒_ _⊢ᴼ_⇒_∥_
 
 ---- Typing judgements ---------------------------------------------------------
 
 data _⊢_⇐_∥_ : Context → Expression → Mono → Effect → Set
 data _⊢_⇒_∥_ : Context → Expression → Mono → Effect → Set
+data _⊢_⇛_∥_ : Context → List Expression → List Mono → Effect → Set
 -- data _⊢_⦂_⇒_ : Context → Expression → Mono → Effect → Set
 -- data _⊢_∥_⇒_ : Context → Expression → Effect → Mono → Set
 data _⊢ᴾ_⇒_ : Context → Primitive → Mono → Set
@@ -56,17 +57,22 @@ data _⊢_⇒_∥_ where
     Γ ⊢ ` x ⇒ τ ∥ ∅
   -- Functions and binding
   t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
+    Γ ⊢ e⁺ ⇛ τ⁺ ∥ η⁺ →
     Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
-    All (λ {(eᵢ , τᵢ) → ∀ {ηᵢ} → Γ ⊢ eᵢ ⇒ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
-    ------------------------------------------------------------------------
-    Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
+    ------------------------------
+    Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η⁺ ∪ η₀
+  -- t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
+  --   Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
+  --   All (λ {(eᵢ , τᵢ) → ∀ {ηᵢ} → Γ ⊢ eᵢ ⇒ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
+  --   ------------------------------------------------------------------------
+  --   Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
   -- t-app-1 : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
   --   Γ ⊢ e₀ ⇒ τ₁ ⟨ η ⟩→ τ₀ ∥ η₀ →
   --   Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
   --   η₁ ⊆ η⁺}) (zip e⁺ τ⁺) →
   --   ------------------------------
   --   Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
-  t-val : ∀ {Γ x₁ e₁ e₀ τ₁ τ₀ η₁ η₀} →
+  t-let : ∀ {Γ x₁ e₁ e₀ τ₁ τ₀ η₁ η₀} →
     Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
     Γ , x₁ ⦂ τ₁ ⊢ e₀ ⇒ τ₀ ∥ η₀ →
     -----------------------------------
@@ -120,7 +126,7 @@ data _⊢_⇒_∥_ where
     -----------------------
     Γ ⊢ adr a ⇒ Ref r β {β-ok} ∥ ∅
   -- Instead of making `Mutate r` _available_ as an effect
-  -- (which needs a cheking mode),
+  -- (which needs a checking mode),
   -- we _synthesize_ τ and η and _remove_ the synthesized region effects from η
   -- `run` is is annotated with a region `r`,
   -- so we know which region to run and which `Mutate r` effect to remove.
@@ -134,6 +140,16 @@ data _⊢_⇒_∥_ where
     Γ ++ ⌈ μ ⌉ r ⊢ e ⇒ τ ∥ η →
     --------------------------
     Γ ⊢ mem r μ e ⇒ τ ∥ η
+
+data _⊢_⇛_∥_ where
+  s-nil : ∀ {Γ} →
+    ---------------
+    Γ ⊢ [] ⇛ [] ∥ ∅
+  s-cons : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η₀ η⁺} →
+    Γ ⊢ e₀ ⇒ τ₀ ∥ η₀ →
+    Γ ⊢ e⁺ ⇛ τ⁺ ∥ η⁺ →
+    ------------------------------
+    Γ ⊢ e₀ ∷ e⁺ ⇛ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
 
 data _⊢_⇐_∥_ where
   t-sub : ∀ {Γ e τ τ′ η η′} →
