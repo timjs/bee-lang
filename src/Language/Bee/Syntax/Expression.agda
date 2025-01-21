@@ -24,9 +24,9 @@ infixl 7 _`*_ -- _`/_ _`%_
 infixl 6 _`+_ _`-_
 infix  4 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_
 infix  1 `if_then_else_ `with_←_else_⨾_
-infixr 0 val_`=_⨾_ var_`in_≔_⨾_ _≔_⨾_
+infixr 0 fun_[_]→_∥_`=_⨾_ val_`=_⨾_ var_`in_≔_⨾_ _≔_⨾_
 
-record Module : Set
+-- record Module : Set
 data Declaration : Set
 data Parameter : Set
 data Expression : Set
@@ -39,15 +39,15 @@ data IsBasic : Expression → Set
 record Value : Set
 record Basic : Set
 
-record Module where
-  field
-    declarations : List Declaration
-    main : Expression
+-- record Module where
+--   field
+--     declarations : List Declaration
+--     main : Expression
 
 data Declaration where
   --TS Don't know why we need the `lvars` for, we can deduce them from the expression
-  fun : Id → List Parameter → Effect → Type.Mono → Expression → Declaration
-  val : Id → Expression → Declaration
+  fun_[_]→_∥_`=_⨾_ : Id → List Parameter → Type.Mono → Effect → Expression → Declaration → Declaration
+  val_`=_⨾_ : Id → Expression → Declaration → Declaration
 
 data Parameter where
   _`:_ : Id → Type.Mono → Parameter
@@ -71,7 +71,8 @@ data Expression where
   _! : Expression → Expression
   _≔_ : Expression → Expression → Expression
   run : Id → Expression → Expression
-  -- Not intended to be used by the programmer
+  -- These are not intended to be used by the programmer.
+  -- Addresses are not primitive, as every primitive is Basic.
   adr : Ix → Expression
   mem : Id → Memory → Expression → Expression
 
