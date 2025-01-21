@@ -4,14 +4,14 @@ open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
 
-infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_ _⊢_⇛_∥_
+infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_ _⊢_⇉_∥_ _⊢_⇚_∥_
 infix  4 _⊢ᴾ_⇒_ _⊢ᴼ_⇒_∥_
 
 ---- Typing judgements ---------------------------------------------------------
 
 data _⊢_⇐_∥_ : Context → Expression → Mono → Effect → Set
 data _⊢_⇒_∥_ : Context → Expression → Mono → Effect → Set
-data _⊢_⇛_∥_ : Context → List Expression → List Mono → Effect → Set
+data _⊢_⇉_∥_ : Context → List Expression → List Mono → Effect → Set
 -- data _⊢_⦂_⇒_ : Context → Expression → Mono → Effect → Set
 -- data _⊢_∥_⇒_ : Context → Expression → Effect → Mono → Set
 data _⊢ᴾ_⇒_ : Context → Primitive → Mono → Set
@@ -57,7 +57,7 @@ data _⊢_⇒_∥_ where
     Γ ⊢ ` x ⇒ τ ∥ ∅
   -- Functions and binding
   t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-    Γ ⊢ e⁺ ⇛ τ⁺ ∥ η⁺ →
+    Γ ⊢ e⁺ ⇉ τ⁺ ∥ η⁺ →
     Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
     ------------------------------
     Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η⁺ ∪ η₀
@@ -137,19 +137,19 @@ data _⊢_⇒_∥_ where
     Γ ⊢ run r e ⇒ τ ∥ η ＼ Mutate r
   t-mem : ∀ {Γ μ r e τ η} →
     Mutate r ⊆ η →
-    Γ ++ ⌈ μ ⌉ r ⊢ e ⇒ τ ∥ η →
+    Γ ++ ⌈ μ ⌉∙ r ⊢ e ⇒ τ ∥ η →
     --------------------------
     Γ ⊢ mem r μ e ⇒ τ ∥ η
 
-data _⊢_⇛_∥_ where
+data _⊢_⇉_∥_ where
   s-nil : ∀ {Γ} →
     ---------------
-    Γ ⊢ [] ⇛ [] ∥ ∅
+    Γ ⊢ [] ⇉ [] ∥ ∅
   s-cons : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η₀ η⁺} →
     Γ ⊢ e₀ ⇒ τ₀ ∥ η₀ →
-    Γ ⊢ e⁺ ⇛ τ⁺ ∥ η⁺ →
+    Γ ⊢ e⁺ ⇉ τ⁺ ∥ η⁺ →
     ------------------------------
-    Γ ⊢ e₀ ∷ e⁺ ⇛ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
+    Γ ⊢ e₀ ∷ e⁺ ⇉ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
 
 data _⊢_⇐_∥_ where
   t-sub : ∀ {Γ e τ τ′ η η′} →
@@ -158,3 +158,20 @@ data _⊢_⇐_∥_ where
     η′ ⊆ η →
     -------------
     Γ ⊢ e ⇐ τ ∥ η
+
+
+data _⊢_⇚_∥_ : Context → Declaration → Mono → Effect → Set where
+  t-fun : ∀ {Γ x p⁺ e d τ τ⁺ τ₀ η η₀} →
+    Γ ++ ⌈ p⁺ ⌉ ⊢ e ⇐ τ₀ ∥ η₀ →
+    Γ , x ⦂ τ⁺ ⟨ η₀ ⟩→ τ₀ ⊢ d ⇚ τ ∥ η →
+    -----------------------------------------
+    Γ ⊢ fun x [ p⁺ ]⟨ η ⟩→ τ ＝ e ⨾ d ⇚ τ ∥ η
+  t-val : ∀ {Γ x₀ e₀ τ₀ d τ η} →
+    Γ ⊢ e₀ ⇒ τ₀ ∥ ∅ →
+    Γ , x₀ ⦂ τ₀ ⊢ d ⇚ τ ∥ η →
+    ----------------------------
+    Γ ⊢ val x₀ ＝ e₀ ⨾ d ⇚ τ ∥ η
+  t-main : ∀ {Γ e τ η} →
+    Γ ⊢ e ⇐ τ ∥ η →
+    -------------------------------
+    Γ ⊢ main[]⟨ η ⟩→ τ ＝ e ⇚ τ ∥ η
