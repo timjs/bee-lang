@@ -1,3 +1,4 @@
+```agda
 module Language.Bee.Context where
 
 import Data.String as String
@@ -83,3 +84,4 @@ free : Context → List Id
 free ∅ = []
 free (Γ , x ⦂ Ref m τ) = m ∷ free Γ
 free (Γ , _ ⦂ _) = free Γ
+```

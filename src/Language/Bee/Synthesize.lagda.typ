@@ -1,3 +1,4 @@
+```agda
 module Language.Bee.Synthesize where
 
 import Data.String as String
@@ -153,3 +154,4 @@ synthesize : (Γ : Context) → (e : Expression) → String ⊎ Mono × Effect
 synthesize Γ e with synthesize? Γ e
 ... | yes (τ , η , _) = right (τ , η)
 ... | no _ = wrong "Type error"
+```

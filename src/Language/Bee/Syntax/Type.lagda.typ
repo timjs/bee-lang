@@ -1,3 +1,4 @@
+```agda
 {-# OPTIONS --allow-unsolved-metas #-}
 module Language.Bee.Syntax.Type where
 
@@ -173,3 +174,4 @@ Word s₁ w₁ ≟ Word s₂ w₂ = yes {!   !}
 
 -- ε∪ : Effect
 -- ε∪ = ε₁ ++ ε₂
+```

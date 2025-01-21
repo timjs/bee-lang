@@ -1,3 +1,4 @@
+```agda
 {-# OPTIONS --allow-unsolved-metas #-}
 open import Relation.Binary.Definitions using (DecidableEquality)
 
@@ -97,3 +98,4 @@ _⊉_ : Finset → Finset → Set
 
 _⊆?_ : (xs : Finset) → (ys : Finset) → Dec (xs ⊆ ys)
 _⊆?_ xs ys = {!   !}
+```

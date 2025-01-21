@@ -1,3 +1,4 @@
+```agda
 module Prelude where
 
 
@@ -33,3 +34,4 @@ pattern _↦_ a b = (a , b)
 -- pattern [_,_,_] a b c = a ∷ b ∷ c ∷ []
 -- pattern [_,_,_,_] a b c d = a ∷ b ∷ c ∷ d ∷ []
 -- pattern [_,_,_,_,_] a b c d e = a ∷ b ∷ c ∷ d ∷ e ∷ []
+```

@@ -1,3 +1,4 @@
+```agda
 module Language.Bee.Syntax.Common where
 
 import Data.String as String
@@ -12,3 +13,4 @@ Ix = String
 -- Ix = Nat
 
 open import Data.List.Membership.DecPropositional (String._≟_) using (_∈_; _∉_; _∈?_; _∉?_) public
+```

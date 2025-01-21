@@ -1,3 +1,4 @@
+```agda
 module Language.Bee.Judgement where
 
 open import Prelude
@@ -175,3 +176,4 @@ data _⊢_⇚_∥_ : Context → Declaration → Mono → Effect → Set where
     Γ ⊢ e ⇐ τ ∥ η →
     -------------------------------
     Γ ⊢ main[]⟨ η ⟩→ τ ＝ e ⇚ τ ∥ η
+```

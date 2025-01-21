@@ -1,3 +1,4 @@
+```agda
 module Language.Bee.Syntax.Effect.Label where
 
 open import Prelude
@@ -57,3 +58,4 @@ Store h₁ ≟ Load h₂ = no λ ()
 Store h₁ ≟ Store h₂ with h₁ String.≟ h₂
 ... | yes refl = yes refl
 ... | no ¬h₁≡h₂ = no (¬h₁≡h₂ ∘ store-injective)
+```

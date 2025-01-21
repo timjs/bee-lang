@@ -1,3 +1,4 @@
+```agda
 module Language.Bee.Syntax.Expression where
 
 open import Prelude hiding (if_then_else_; _≡_; _≢_)
@@ -225,3 +226,4 @@ fun xdp-prog(ctx: xdp/md) -> i32
     then xdp/Pass // Implicit return
     else xdp/Drop
 -}
+```

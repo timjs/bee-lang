@@ -1,3 +1,4 @@
+```agda
 module Data.Int where
 
 open import Data.Integer renaming (ℤ to Int) public
@@ -27,3 +28,4 @@ x <ᵇ y = (x ≤ᵇ y) ∧ (x ≢ᵇ y)
 
 _>ᵇ_ : Int → Int → Bool
 x >ᵇ y = (x ≥ᵇ y) ∧ (x ≢ᵇ y)
+```
