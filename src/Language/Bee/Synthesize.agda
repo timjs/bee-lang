@@ -6,20 +6,17 @@ open import Prelude
 open import Language.Bee.Syntax
 open import Language.Bee.Judgement
 
-run-synthesize-uninhabited : ∀ {Γ r e τ η} → ¬ (Γ ⊢ run r e ⇒ τ ∥ η)
-run-synthesize-uninhabited = λ ()
-
 check? : (Γ : Context) → (e : Expression) → (τ : Mono) → (η : Effect) → Dec (Γ ⊢ e ⇐ τ ∥ η)
 synthesizeᴾ : (Γ : Context) → (p : Primitive) → ∃[ τ ] Γ ⊢ᴾ p ⇒ τ
 synthesize?ᴼ : (Γ : Context) → (o : Operation) → Dec (∃[ τ ] ∃[ η ] Γ ⊢ᴼ o ⇒ τ ∥ η)
 synthesize? : (Γ : Context) → (e : Expression) → Dec (∃[ τ ] ∃[ η ] Γ ⊢ e ⇒ τ ∥ η)
 
 
-check? Γ (run r e) τ η with check? Γ e τ (Mutate r ∪ η)
-... | no ¬∃ = no {! no  !}
-... | yes rule with r ∉? free Γ
-...   | no ¬r∉Γ = no {! no !}
-...   | yes r∉Γ = yes (t-run rule r∉Γ)
+-- check? Γ (run r e) τ η with check? Γ e τ (Mutate r ∪ η)
+-- ... | no ¬∃ = no {! no  !}
+-- ... | yes rule with r ∉? free Γ
+-- ...   | no ¬r∉Γ = no {! no !}
+-- ...   | yes r∉Γ = yes (t-run rule r∉Γ)
 check? Γ e τ η with synthesize? Γ e
 ... | no ¬∃ = {! no !}
 ... | yes (τ′ , η′ , rule) with τ′ Type.≟ τ | η′ ⊆? η
@@ -133,7 +130,12 @@ synthesize? Γ (e₁ ≔ e₂) with synthesize? Γ e₁ | synthesize? Γ e₂
 synthesize? Γ (e₁ ≔ e₂) | yes (τ₁ , η₁ , rule₁) | yes (τ₂ , η₂ , rule₂) = no {! no  !}
 
 -- FIXME: is this ok?
-synthesize? Γ (run r e) = no λ{ (τ , η , rule) → run-synthesize-uninhabited rule }
+-- synthesize? Γ (run r e) = no λ{ (τ , η , rule) → run-synthesize-uninhabited rule }
+synthesize? Γ (run r e) with synthesize? Γ e
+... | no ¬∃ = no {! no  !}
+... | yes (τ , η , rule) with r ∉? free Γ
+...   | no ¬r∉Γ = no {! no  !}
+...   | yes r∉Γ = yes ( τ , η ＼ Mutate r , t-run rule r∉Γ)
 
 synthesize? Γ (adr a) with lookup? Γ a
 ... | no ¬∃ = no {! no  !} -- λ{ (τ , η , t-var ∋x) → ¬∃ (τ , ∋x) }

@@ -119,6 +119,16 @@ data _⊢_⇒_∥_ where
     Γ ∋ a ⦂ Ref r β {β-ok} →
     -----------------------
     Γ ⊢ adr a ⇒ Ref r β {β-ok} ∥ ∅
+  -- Instead of making `Mutate r` _available_ as an effect
+  -- (which needs a cheking mode),
+  -- we _synthesize_ τ and η and _remove_ the synthesized region effects from η
+  -- `run` is is annotated with a region `r`,
+  -- so we know which region to run and which `Mutate r` effect to remove.
+  t-run : ∀ {Γ r e τ η} →
+    Γ ⊢ e ⇒ τ ∥ η →
+    r ∉ free Γ →
+    ------------------------------
+    Γ ⊢ run r e ⇒ τ ∥ η ＼ Mutate r
   t-mem : ∀ {Γ μ r e τ η} →
     Mutate r ⊆ η →
     Γ ++ ⌈ μ ⌉ r ⊢ e ⇒ τ ∥ η →
@@ -126,16 +136,6 @@ data _⊢_⇒_∥_ where
     Γ ⊢ mem r μ e ⇒ τ ∥ η
 
 data _⊢_⇐_∥_ where
-  -- Here we need to make `Mutate r` *available* as an effect,
-  -- so we should _check_ `e`.
-  -- Therefore, we also need to _check_ `run r e`.
-  -- `run` is also annotated with a region `r`,
-  -- so it is available for the `Mutate r` effect.
-  t-run : ∀ {Γ r e τ η} →
-    Γ ⊢ e ⇐ τ ∥ Mutate r ∪ η →
-    r ∉ free Γ →
-    -------------------
-    Γ ⊢ run r e ⇐ τ ∥ η
   t-sub : ∀ {Γ e τ τ′ η η′} →
     Γ ⊢ e ⇒ τ′ ∥ η′ →
     τ′ ≡ τ →
