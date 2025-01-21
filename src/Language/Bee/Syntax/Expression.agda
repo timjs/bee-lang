@@ -24,7 +24,7 @@ infixl 7 _`*_ -- _`/_ _`%_
 infixl 6 _`+_ _`-_
 infix  4 _`<_ _`≤_ _`≡_ _`≢_ _`≥_ _`>_
 infix  1 `if_then_else_ `with_←_else_⨾_
-infixr 0 fun_[_]→_∥_`=_⨾_ val_`=_⨾_ var_`in_≔_⨾_ _≔_⨾_
+infixr 0 fun_[_]⟨_⟩→_＝_⨾_ val_＝_⨾_ var_`in_≔_⨾_ _≔_⨾_
 
 -- record Module : Set
 data Declaration : Set
@@ -46,11 +46,12 @@ record Basic : Set
 
 data Declaration where
   --TS Don't know why we need the `lvars` for, we can deduce them from the expression
-  fun_[_]→_∥_`=_⨾_ : Id → List Parameter → Type.Mono → Effect → Expression → Declaration → Declaration
-  val_`=_⨾_ : Id → Expression → Declaration → Declaration
+  fun_[_]⟨_⟩→_＝_⨾_ : Id → List Parameter → Effect → Mono → Expression → Declaration → Declaration
+  val_＝_⨾_ : Id → Expression → Declaration → Declaration
+  main[]⟨_⟩→_＝_ : Effect → Mono → Expression → Declaration
 
 data Parameter where
-  _`:_ : Id → Type.Mono → Parameter
+  _`:_ : Id → Mono → Parameter
 
 data Expression where
   -- Variables
@@ -63,7 +64,7 @@ data Expression where
   oper : Operation → Expression
   `if_then_else_ : Expression → Expression → Expression → Expression
   -- Optionals
-  None : Type.Mono → Expression
+  None : Mono → Expression
   Some : Expression → Expression
   `with_←_else_⨾_ : Id → Expression → Expression → Expression → Expression
   -- References

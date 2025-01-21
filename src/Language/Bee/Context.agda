@@ -5,7 +5,7 @@ import Data.String as String
 open import Prelude
 open import Language.Bee.Syntax hiding (∅)
 
-infix  6 ⌈_⌉_ ⟦_⟧ᵀ
+infix  6 ⌈_⌉∙_ ⌈_⌉ ⟦_⟧ᵀ
 infixl 5 _,_⦂_ _++_
 infix  4 _∋_⦂_
 
@@ -69,10 +69,14 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 -- However, because our references need to be of basic type,
 -- we'd need a proof that every basic value is of a basic type.
 -- This is provided by our translation function.
-⌈_⌉_ : Memory → Id → Context
-⌈ [] ⌉ _ = ∅
-⌈ x ↦ b ∷ μ ⌉ r with ⟦ b ⟧ᵀ
-... | (β , β-ok) = ⌈ μ ⌉ r , x ⦂ Ref r β {β-ok}
+⌈_⌉∙_ : Memory → Id → Context
+⌈ [] ⌉∙ _ = ∅
+⌈ x ↦ b ∷ μ ⌉∙ r with ⟦ b ⟧ᵀ
+... | (β , β-ok) = ⌈ μ ⌉∙ r , x ⦂ Ref r β {β-ok}
+
+⌈_⌉ : List Parameter → Context
+⌈ [] ⌉ = ∅
+⌈ x `: τ ∷ ps ⌉ = ⌈ ps ⌉ , x ⦂ τ
 
 -- Free memory variables in a context
 free : Context → List Id

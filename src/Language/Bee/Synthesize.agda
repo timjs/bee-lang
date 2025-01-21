@@ -142,7 +142,7 @@ synthesize? Γ (adr a) with lookup? Γ a
 ... | yes (Ref r β , ∋a) = yes (Ref r β , ∅ , t-adr ∋a)
 ... | yes (τ , ∋a) = no {! no  !}
 
-synthesize? Γ (mem r μ e) with synthesize? (Γ ++ ⌈ μ ⌉ r) e
+synthesize? Γ (mem r μ e) with synthesize? (Γ ++ ⌈ μ ⌉∙ r) e
 ... | no ¬∃ = no {! no  !}
 ... | yes (τ , η , rule) with Mutate r ⊆? η
 ...   | no ¬r⊆η = no {! no  !}
