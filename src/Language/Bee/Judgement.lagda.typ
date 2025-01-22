@@ -5,14 +5,14 @@ open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
 
-infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_ _⊢_⇉_∥_ _⊢_⇚_∥_
+infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_ _⊢_⇒⁺_∥_ _⊢_⇚_∥_
 infix  4 _⊢ᴾ_⇒_ _⊢ᴼ_⇒_∥_
 
 ---- Typing judgements ---------------------------------------------------------
 
 data _⊢_⇐_∥_ : Context → Expression → Mono → Effect → Set
 data _⊢_⇒_∥_ : Context → Expression → Mono → Effect → Set
-data _⊢_⇉_∥_ : Context → List Expression → List Mono → Effect → Set
+data _⊢_⇒⁺_∥_ : Context → List Expression → List Mono → Effect → Set
 -- data _⊢_⦂_⇒_ : Context → Expression → Mono → Effect → Set
 -- data _⊢_∥_⇒_ : Context → Expression → Effect → Mono → Set
 data _⊢ᴾ_⇒_ : Context → Primitive → Mono → Set
@@ -58,7 +58,7 @@ data _⊢_⇒_∥_ where
     Γ ⊢ ` x ⇒ τ ∥ ∅
   -- Functions and binding
   t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-    Γ ⊢ e⁺ ⇉ τ⁺ ∥ η⁺ →
+    Γ ⊢ e⁺ ⇒⁺ τ⁺ ∥ η⁺ →
     Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
     ------------------------------
     Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η⁺ ∪ η₀
@@ -142,15 +142,15 @@ data _⊢_⇒_∥_ where
     --------------------------
     Γ ⊢ mem r μ e ⇒ τ ∥ η
 
-data _⊢_⇉_∥_ where
+data _⊢_⇒⁺_∥_ where
   s-nil : ∀ {Γ} →
     ---------------
-    Γ ⊢ [] ⇉ [] ∥ ∅
+    Γ ⊢ [] ⇒⁺ [] ∥ ∅
   s-cons : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η₀ η⁺} →
     Γ ⊢ e₀ ⇒ τ₀ ∥ η₀ →
-    Γ ⊢ e⁺ ⇉ τ⁺ ∥ η⁺ →
+    Γ ⊢ e⁺ ⇒⁺ τ⁺ ∥ η⁺ →
     ------------------------------
-    Γ ⊢ e₀ ∷ e⁺ ⇉ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
+    Γ ⊢ e₀ ∷ e⁺ ⇒⁺ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
 
 data _⊢_⇐_∥_ where
   t-sub : ∀ {Γ e τ τ′ η η′} →
