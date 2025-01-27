@@ -1,0 +1,152 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: Agda
+file_extensions:
+  - agda
+  - lagda.tex
+  - lagda.rst
+  - lagda.md
+  - lagda.typ
+scope: source.agda
+contexts:
+  main:
+    - match: '\b(module)\s+([^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*)\b'
+      captures:
+        1: keyword.other.agda
+        2: storage.module.agda
+      push:
+        - meta_scope: meta.declaration.module.agda
+        - match: (\bwhere\b|=)
+          captures:
+            1: keyword.other.agda
+          pop: true
+        - include: module_param
+        - include: module_params
+        - include: module_params_implicit
+    - match: ^\s*(import|open(\s+import)?)\b
+      captures:
+        1: keyword.other.agda
+      push:
+        - meta_scope: meta.import.agda
+        - match: $
+          pop: true
+        - match: \b(as|using|renaming|hiding|public)\b
+          scope: keyword.other.agda
+    - match: '^\s*(record)\s+([^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*)\b'
+      captures:
+        1: keyword.other.agda
+        2: storage.record.agda
+      push:
+        - meta_scope: meta.declaration.record.agda
+        - match: \b(where)\b
+          captures:
+            1: keyword.other.agda
+          pop: true
+    - match: '\b(data)\s+([^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*)\b'
+      captures:
+        1: keyword.other.agda
+        2: storage.data.agda
+      # push:
+      #   - meta_scope: meta.declaration.record.agda
+      #   - match: \b(where)\b
+      #     captures:
+      #       1: keyword.other.agda
+      #     pop: true
+    - match: '"'
+      push:
+        - meta_scope: string.quoted.double.agda
+        - match: '"'
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.agda
+    - match: '\binfix(|l|r)\b'
+      scope: keyword.operator.agda
+    - match: \b(where|as|case|field|constructor|record|private|public|abstract|mutual)\b
+      scope: keyword.other.agda
+    - match: '(?<=\s)[=→λ∀?]'
+      scope: keyword.operator.agda
+    - match: '^\s*([^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*)\s*(:)(?=\s|$)'
+      scope: meta.function.type-declaration.agda
+      captures:
+        1: entity.name.function.agda
+        2: keyword.other.colon.agda
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.agda
+      push:
+        - meta_scope: string.quoted.double.agda
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.end.agda
+          pop: true
+        - match: '\\(NUL|SOH|STX|ETX|EOT|ENQ|ACK|BEL|BS|HT|LF|VT|FF|CR|SO|SI|DLE|DC1|DC2|DC3|DC4|NAK|SYN|ETB|CAN|EM|SUB|ESC|FS|GS|RS|US|SP|DEL|[abfnrtv\\\"''\&])'
+          scope: constant.character.escape.agda
+        - match: '\\o[0-7]+|\\x[0-9A-Fa-f]+|\\[0-9]+'
+          scope: constant.character.escape.octal.agda
+        - match: '\^[A-Z@\[\]\\\^_]'
+          scope: constant.character.escape.control.agda
+    - match: '\b([0-9]+|0([xX][0-9a-fA-F]+))\b'
+      scope: constant.numeric.agda
+    - include: dashComment
+    - include: pragma
+    - include: blockComment
+  blockComment:
+    - match: '{-'
+      captures:
+        0: punctuation.definition.comment.agda
+      push:
+        - meta_scope: comment.block.agda
+        - match: '-}'
+          captures:
+            0: punctuation.definition.comment.agda
+          pop: true
+  dashComment:
+    - match: '(--+)'
+      captures:
+        0: punctuation.definition.comment.agda
+      push:
+        - meta_scope: comment.line.double-dash.agda
+        - match: $
+          pop: true
+  identifier:
+    - match: '\b[^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*'
+      comment: not so much here to be used as to be a reference
+      scope: entity.name.function.agda
+  module_param:
+    - match: '\b[^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*'
+      scope: entity.name.parameter.agda
+  module_params:
+    - match: \(
+      push:
+        - meta_scope: meta.declaration.module.params.agda
+        - match: \)
+          pop: true
+        - include: module_param
+        - include: type_sig_rhs
+  module_params_implicit:
+    - match: '\{'
+      push:
+        - meta_scope: meta.declaration.module.params.agda
+        - match: '\}'
+          pop: true
+        - include: module_param
+        - include: type_sig_rhs
+  pragma:
+    - match: '\{-#'
+      captures:
+        0: punctuation.definition.pragma.agda
+      push:
+        - meta_scope: support.pragma.block.agda
+        - match: '#-\}'
+          captures:
+            0: punctuation.definition.pragma.agda
+          pop: true
+  type_sig_rhs:
+    - match: ':'
+      push:
+        - meta_scope: meta.declaration.module.params.typesig.agda
+        - match: '(?=[\)\}])'
+          pop: true
+        - match: '\b[^\(\)\{\}[:space:]=→λ∀?][^\(\)\{\}[:space:]]*'
+          scope: storage.type.agda

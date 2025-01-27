@@ -1,3 +1,12 @@
+#import "/typ/commands.typ": *
+
+= Typing judgements
+
+This is the main module where we define our typing rules.
+We use a bidirectional type system.
+There are multiple relations we define,
+which we'll describe below.
+
 ```agda
 module Language.Bee.Judgement where
 
@@ -5,19 +14,36 @@ open import Prelude
 open import Language.Bee.Context renaming (∅ to ∅ᶜ) public
 open import Language.Bee.Syntax
 
-infix  4 _⊢_⇐_∥_ _⊢_⇒_∥_ _⊢_⇒⁺_∥_ _⊢_⇚_∥_
+infix  4 _⊢_⇐_∥_ _⊢_⇐_⇒_ _⊢_⇚_∥_
+infix  4 _⊢_⇒_∥_ _⊢_⇒⁺_∥_
 infix  4 _⊢ᴾ_⇒_ _⊢ᴼ_⇒_∥_
+```
 
----- Typing judgements ---------------------------------------------------------
+== Declarations
 
+First, we have two checking relations.
+// - `Γ ⊢ e ⇒ τ ∥ η` _checks_ expression `e` against type `τ` and effect set `η`.
+- $Gamma infer e check tau with eta$ _checks_ expression $e$ against type $tau$ and effect set $eta$.
+- $Gamma infer e check tau synth eta$ checks $e$ against type $tau$ and _synthesizes_ effect set $eta$.
+```agda
 data _⊢_⇐_∥_ : Context → Expression → Mono → Effect → Set
+data _⊢_⇐_⇒_ : Context → Expression → Mono → Effect → Set
+```
+
+Next, we have multiple synthesize relations.
+- $Gamma infer e synth tau with eta$ _synthesizes_ from expression $e$ type $tau$ and effect set $eta$.
+- $Gamma infer e synths tau synths eta$ is similar, but for spines.
+- $Gamma infer^O e synth tau with eta$ and $Gamma infer^P e synth tau$ synthesize for operations and primitives.
+  As creating primitives have no effect, this relation leaves effect sets out.
+```agda
 data _⊢_⇒_∥_ : Context → Expression → Mono → Effect → Set
 data _⊢_⇒⁺_∥_ : Context → List Expression → List Mono → Effect → Set
--- data _⊢_⦂_⇒_ : Context → Expression → Mono → Effect → Set
--- data _⊢_∥_⇒_ : Context → Expression → Effect → Mono → Set
-data _⊢ᴾ_⇒_ : Context → Primitive → Mono → Set
 data _⊢ᴼ_⇒_∥_ : Context → Operation → Mono → Effect → Set
+data _⊢ᴾ_⇒_ : Context → Primitive → Mono → Set
+```
 
+Synthesizing primitives is trivial.
+```agda
 data _⊢ᴾ_⇒_ where
   l-unit : ∀ {Γ} →
     --------------
@@ -31,20 +57,26 @@ data _⊢ᴾ_⇒_ where
   l-word : ∀ {Γ s w n} →
     -------------------------
     Γ ⊢ᴾ word s w n ⇒ Word s w
+```
 
+When synthesizing operations,
+we synthesize the word sign and width of the first argument,
+after which we check that the second argument has the same sign and width.
+```agda
 data _⊢ᴼ_⇒_∥_ where
-  o-calc : ∀ {Γ e₁ η₁ e₂ η₂ τ f} →
-    Γ ⊢ e₁ ⇒ τ ∥ η₁ →
-    Γ ⊢ e₂ ⇒ τ ∥ η₂ →
+  o-calc : ∀ {Γ e₁ η₁ e₂ η₂ s w f} →
+    Γ ⊢ e₁ ⇒ Word s w ∥ η₁ →
+    Γ ⊢ e₂ ⇐ Word s w ⇒ η₂ →
     -------------------------------
-    Γ ⊢ᴼ calc f e₁ e₂ ⇒ τ ∥ η₁ ∪ η₂
-  o-comp : ∀ {Γ e₁ η₁ e₂ η₂ τ f} →
-    Γ ⊢ e₁ ⇒ τ ∥ η₁ →
-    Γ ⊢ e₂ ⇒ τ ∥ η₂ →
+    Γ ⊢ᴼ calc f e₁ e₂ ⇒ Word s w ∥ η₁ ∪ η₂
+  o-comp : ∀ {Γ e₁ η₁ e₂ η₂ s w f} →
+    Γ ⊢ e₁ ⇒ Word s w ∥ η₁ →
+    Γ ⊢ e₂ ⇐ Word s w ⇒ η₂ →
     -------------------------------
-    Γ ⊢ᴼ comp f e₁ e₂ ⇒ τ ∥ η₁ ∪ η₂
+    Γ ⊢ᴼ comp f e₁ e₂ ⇒ Bool ∥ η₁ ∪ η₂
+```
 
-
+```agda
 -- Note: Only when making `IsBasic β` an instance argument of `Ref_`
 -- *and* having an `IsBasic β` instance argument here
 -- *and* giving it a name,
@@ -57,22 +89,12 @@ data _⊢_⇒_∥_ where
     --------------
     Γ ⊢ ` x ⇒ τ ∥ ∅
   -- Functions and binding
-  t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
+  t-app : ∀ {Γ e₀ e⁺ f τ₀ τ⁺ η η₀ η⁺} →
     Γ ⊢ e⁺ ⇒⁺ τ⁺ ∥ η⁺ →
-    Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
+    Γ ∋ f ⦂ τ⁺ ⟨ η₀ ⟩→ τ₀ →
+    Γ ⊢ e₀ ⇐ τ⁺ ⟨ η₀ ⟩→ τ₀ ⇒ η →
     ------------------------------
     Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η⁺ ∪ η₀
-  -- t-app : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-  --   Γ ⊢ e₀ ⇒ τ⁺ ⟨ η₀ ⟩→ τ₀ ∥ η →
-  --   All (λ {(eᵢ , τᵢ) → ∀ {ηᵢ} → Γ ⊢ eᵢ ⇒ τᵢ ∥ ηᵢ × ηᵢ ⊆ η⁺}) (zip e⁺ τ⁺) →
-  --   ------------------------------------------------------------------------
-  --   Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
-  -- t-app-1 : ∀ {Γ e₀ e⁺ τ₀ τ⁺ η η₀ η⁺} →
-  --   Γ ⊢ e₀ ⇒ τ₁ ⟨ η ⟩→ τ₀ ∥ η₀ →
-  --   Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
-  --   η₁ ⊆ η⁺}) (zip e⁺ τ⁺) →
-  --   ------------------------------
-  --   Γ ⊢ e₀ ◂ e⁺ ⇒ τ₀ ∥ η ∪ η₀ ∪ η⁺
   t-let : ∀ {Γ x₁ e₁ e₀ τ₁ τ₀ η₁ η₀} →
     Γ ⊢ e₁ ⇒ τ₁ ∥ η₁ →
     Γ , x₁ ⦂ τ₁ ⊢ e₀ ⇒ τ₀ ∥ η₀ →
@@ -88,7 +110,7 @@ data _⊢_⇒_∥_ where
     ----------------
     Γ ⊢ oper o ⇒ τ ∥ η
   t-if : ∀ {Γ e₀ e₁ e₂ τ₁₂ η₀ η₁ η₂} →
-    Γ ⊢ e₀ ⇒ Bool ∥ η₀ →
+    Γ ⊢ e₀ ⇐ Bool ⇒ η₀ →
     Γ ⊢ e₁ ⇒ τ₁₂ ∥ η₁ →
     Γ ⊢ e₂ ⇒ τ₁₂ ∥ η₂ →
     ----------------------------------------------
@@ -151,6 +173,13 @@ data _⊢_⇒⁺_∥_ where
     Γ ⊢ e⁺ ⇒⁺ τ⁺ ∥ η⁺ →
     ------------------------------
     Γ ⊢ e₀ ∷ e⁺ ⇒⁺ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
+
+data _⊢_⇐_⇒_ where
+  t-chk : ∀ {Γ e τ τ′ η} →
+    Γ ⊢ e ⇒ τ′ ∥ η →
+    τ′ ≡ τ →
+    ---------------
+    Γ ⊢ e ⇐ τ ⇒ η
 
 data _⊢_⇐_∥_ where
   t-sub : ∀ {Γ e τ τ′ η η′} →
