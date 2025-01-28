@@ -154,6 +154,9 @@ Word s₁ w₁ ≟ Word s₂ w₂ = yes {!   !}
 -- Word s₁ w₁ ≟ Word s₂ w₂ with s₁ Sign.≟ s₂ | w₁ Width.≟ w₂
 -- ... | yes refl | yes refl = {!   !}
 
+_≟⁺_ : (τ⁺₁ : List Mono) → (τ⁺₂ : List Mono) → Dec (τ⁺₁ ≡ τ⁺₂)
+τ⁺₁ ≟⁺ τ⁺₂ = ≡-dec _≟_ τ⁺₁ τ⁺₂
+
 
 ---- Primitives ----------------------------------------------------------------
 

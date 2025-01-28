@@ -1,4 +1,5 @@
 ```agda
+{-# OPTIONS --allow-unsolved-metas #-}
 module Language.Bee.Context where
 
 import Data.String as String
@@ -31,6 +32,20 @@ data _∋_⦂_ : Context → Id → Mono → Set where
     ----------------
     Γ , y ⦂ σ ∋ x ⦂ τ
 
+-- _∌_⦂_ : Context → Id → Mono → Set
+-- Γ ∌ x ⦂ τ = ¬ (Γ ∋ x ⦂ τ)
+--
+-- data _∋!_⦂_ : Context → Id → Mono → Set where
+--   here : ∀ {Γ x τ} →
+--     Γ ∌ x ⦂ τ →
+--     ----------------
+--     Γ , x ⦂ τ ∋! x ⦂ τ
+--   there : ∀ {Γ x y τ σ} →
+--     x ≢ y →
+--     Γ ∋! x ⦂ τ →
+--     ----------------
+--     Γ , y ⦂ σ ∋! x ⦂ τ
+
 
 ---- Lookup --------------------------------------------------------------------
 
@@ -53,6 +68,27 @@ lookup? (Γ , x′ ⦂ τ′) x with x String.≟ x′
 ... | no x≢x′ with lookup? Γ x
 ...   | yes (τ , ∋x) = yes (τ , there x≢x′ ∋x)
 ...   | no ¬∃ = no (ext∋ x≢x′ ¬∃)
+
+lookup-overloaded? :
+  (Γ : Context) →
+  (τ⁺ : List Mono) →
+  ------------------------
+  Dec (∃[ x₀ ] ∃[ τ₀ ] ∃[ η₀ ] Γ ∋ x₀ ⦂ τ⁺ ⟨ η₀ ⟩→ τ₀)
+lookup-overloaded? ∅ τ⁺ = no λ ()
+lookup-overloaded? (Γ , x₀ ⦂ τ⁺′ ⟨ η₀ ⟩→ τ₀) τ⁺ with τ⁺′ Type.≟⁺ τ⁺
+... | yes refl = yes (x₀ , τ₀ , η₀ , here)
+... | no _ with lookup-overloaded? Γ τ⁺
+...   | yes (x₀ , τ₀ , η₀ , ∋τ⁺) = yes (x₀ , τ₀ , η₀ , there {!   !} {!   !})
+...   | no _ = no {!   !}
+lookup-overloaded? (Γ , x ⦂ τ) τ⁺ = no λ (x₀ , τ₀ , η₀ , i) → {! nop !}
+
+-- lookup-overloaded? ∅ τ⁺ = no λ ()
+-- lookup-overloaded? (Γ , x₀ ⦂ τ⁺′ ⟨ η₀ ⟩→ τ₀) τ⁺ with τ⁺′ Type.≟⁺ τ⁺
+-- ... | yes refl with lookup-overloaded? Γ τ⁺
+-- ...   | no ¬∃ = yes (x₀ , τ₀ , η₀ , here λ x → {! !})
+-- ...   | yes (x₀′ , τ₀′ , η₀′ , rule₀) = no λ x → {!   !}
+-- lookup-overloaded? (Γ , x₀ ⦂ τ⁺′ ⟨ η₀ ⟩→ τ₀) τ⁺ | no ¬∃ = no {!   !}
+-- lookup-overloaded? (Γ , x ⦂ τ) τ⁺ = no {!   !}
 
 
 ---- Helpers -------------------------------------------------------------------

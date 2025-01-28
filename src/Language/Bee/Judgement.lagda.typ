@@ -32,7 +32,7 @@ data _⊢_⇐_⇒_ : Context → Expression → Mono → Effect → Set
 
 Next, we have multiple synthesize relations.
 - $Gamma infer e synth tau with eta$ _synthesizes_ from expression $e$ type $tau$ and effect set $eta$.
-- $Gamma infer e synths tau synths eta$ is similar, but for spines.
+- $Gamma infer e synths tau with eta$ is similar, but for spines.
 - $Gamma infer^O e synth tau with eta$ and $Gamma infer^P e synth tau$ synthesize for operations and primitives.
   As creating primitives have no effect, this relation leaves effect sets out.
 ```agda
@@ -163,7 +163,9 @@ data _⊢_⇒_∥_ where
     Γ ++ ⌈ μ ⌉∙ r ⊢ e ⇒ τ ∥ η →
     --------------------------
     Γ ⊢ mem r μ e ⇒ τ ∥ η
+```
 
+```agda
 data _⊢_⇒⁺_∥_ where
   s-nil : ∀ {Γ} →
     ---------------
@@ -173,14 +175,18 @@ data _⊢_⇒⁺_∥_ where
     Γ ⊢ e⁺ ⇒⁺ τ⁺ ∥ η⁺ →
     ------------------------------
     Γ ⊢ e₀ ∷ e⁺ ⇒⁺ τ₀ ∷ τ⁺ ∥ η₀ ∪ η⁺
+```
 
+```agda
 data _⊢_⇐_⇒_ where
   t-chk : ∀ {Γ e τ τ′ η} →
     Γ ⊢ e ⇒ τ′ ∥ η →
     τ′ ≡ τ →
     ---------------
     Γ ⊢ e ⇐ τ ⇒ η
+```
 
+```agda
 data _⊢_⇐_∥_ where
   t-sub : ∀ {Γ e τ τ′ η η′} →
     Γ ⊢ e ⇒ τ′ ∥ η′ →
@@ -188,8 +194,9 @@ data _⊢_⇐_∥_ where
     η′ ⊆ η →
     -------------
     Γ ⊢ e ⇐ τ ∥ η
+```
 
-
+```agda
 data _⊢_⇚_∥_ : Context → Declaration → Mono → Effect → Set where
   t-fun : ∀ {Γ x p⁺ e d τ τ⁺ τ₀ η η₀} →
     Γ ++ ⌈ p⁺ ⌉ ⊢ e ⇐ τ₀ ∥ η₀ →
